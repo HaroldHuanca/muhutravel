@@ -51,7 +51,8 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
 
       // 1. Navegar a página
       await waitFor(() => {
-        expect(screen.getByText('Clientes')).toBeInTheDocument();
+        // CORRECCIÓN AQUÍ: Usamos getByRole para asegurar que sea el H1 y no el link del footer
+        expect(screen.getByRole('heading', { name: 'Clientes' })).toBeInTheDocument();
       });
 
       // 2. Verificar que hay barra de búsqueda
@@ -89,11 +90,9 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
         email: 'maria@example.com'
       };
 
-      // Validar datos
       expect(nuevoCliente.nombres).toBeDefined();
       expect(nuevoCliente.email).toContain('@');
 
-      // Simular creación
       const clienteCreado = {
         id: 2,
         ...nuevoCliente,
@@ -112,7 +111,6 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
         email: 'juan@example.com'
       };
 
-      // Editar
       const updates = {
         email: 'juan.updated@example.com'
       };
@@ -130,7 +128,6 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
         activo: true
       };
 
-      // Eliminar (soft delete)
       cliente.activo = false;
 
       expect(cliente.activo).toBe(false);
@@ -146,17 +143,14 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
         { id: 3, nombres: 'Carlos', ciudad: 'Lima', activo: false }
       ];
 
-      // 1. Buscar
       const searchResults = clientes.filter(c =>
         c.nombres.toLowerCase().includes('juan')
       );
       expect(searchResults.length).toBe(1);
 
-      // 2. Filtrar
       const filtered = clientes.filter(c => c.ciudad === 'Lima');
       expect(filtered.length).toBe(2);
 
-      // 3. Ordenar
       const sorted = [...filtered].sort((a, b) => a.id - b.id);
       expect(sorted[0].id).toBe(1);
     });
@@ -168,15 +162,12 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
         { id: 3, nombres: 'Carlos', ciudad: 'Lima', activo: false, rol: 'cliente' }
       ];
 
-      // Filtro 1: Solo activos
       let result = clientes.filter(c => c.activo);
       expect(result.length).toBe(2);
 
-      // Filtro 2: De Lima
       result = result.filter(c => c.ciudad === 'Lima');
       expect(result.length).toBe(1);
 
-      // Filtro 3: Ordenar por nombre
       result = result.sort((a, b) => a.nombres.localeCompare(b.nombres));
       expect(result[0].nombres).toBe('Juan');
     });
@@ -190,11 +181,9 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
         { id: 3, nombres: 'Carlos', activo: false }
       ];
 
-      // 1. Ver inactivos
       const inactivos = clientes.filter(c => !c.activo);
       expect(inactivos.length).toBe(1);
 
-      // 2. Reactivar
       clientes = clientes.map(c =>
         c.id === 3 ? { ...c, activo: true } : c
       );
@@ -218,15 +207,12 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
 
       const input = screen.getByPlaceholderText('Buscar clientes...');
 
-      // 1. Escribir en búsqueda
       fireEvent.change(input, { target: { value: 'juan' } });
       expect(mockOnChange).toHaveBeenCalledWith('juan');
 
-      // 2. Cambiar búsqueda
       fireEvent.change(input, { target: { value: 'maría' } });
       expect(mockOnChange).toHaveBeenCalledWith('maría');
 
-      // 3. Limpiar búsqueda
       rerender(
         <SearchBar
           value=""
@@ -246,13 +232,11 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
       );
 
       await waitFor(() => {
-        // Header presente
         expect(screen.getByTestId('header')).toBeInTheDocument();
 
-        // Título presente
-        expect(screen.getByText('Clientes')).toBeInTheDocument();
+        // CORRECCIÓN AQUÍ TAMBIÉN: Usamos getByRole en lugar de getByText
+        expect(screen.getByRole('heading', { name: 'Clientes' })).toBeInTheDocument();
 
-        // Búsqueda presente
         const searchInput = screen.queryByPlaceholderText(/Buscar/i);
         expect(searchInput).toBeInTheDocument();
       });
@@ -262,12 +246,10 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
   describe('Flujo: Manejo de Errores', () => {
     it('debería manejar error en búsqueda', () => {
       const clientes = [];
-
       const search = (term) =>
         clientes.filter(c =>
           c.nombres.toLowerCase().includes(term.toLowerCase())
         );
-
       const results = search('noexiste');
       expect(results.length).toBe(0);
     });
@@ -278,34 +260,19 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
         nombres: 'Juan',
         email: 'juan@example.com'
       };
-
-      const updates = {
-        email: 'invalid-email'
-      };
-
+      const updates = { email: 'invalid-email' };
       const isValidEmail = (email) => email.includes('@');
 
       if (isValidEmail(updates.email)) {
         cliente = { ...cliente, ...updates };
       }
-
-      // Email no se actualiza porque es inválido
       expect(cliente.email).toBe('juan@example.com');
     });
 
     it('debería manejar error en eliminación', () => {
-      let cliente = {
-        id: 1,
-        nombres: 'Juan',
-        activo: true
-      };
-
-      // Intentar eliminar
+      let cliente = { id: 1, nombres: 'Juan', activo: true };
       const deleted = { ...cliente, activo: false };
-
-      // Verificar que se puede revertir
       const restored = { ...deleted, activo: true };
-
       expect(restored.activo).toBe(true);
     });
   });
@@ -319,7 +286,6 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
         email: 'juan@example.com'
       };
 
-      // Validar paso 1: Campos requeridos
       const hasRequiredFields =
         !!cliente.nombres &&
         !!cliente.apellidos &&
@@ -328,14 +294,12 @@ describe('Integration Tests - Flujo de Usuario Completo', () => {
 
       expect(hasRequiredFields).toBe(true);
 
-      // Validar paso 2: Formatos
       const isValidEmail = cliente.email.includes('@');
       const isValidDocument = cliente.documento.length === 8;
 
       expect(isValidEmail).toBe(true);
       expect(isValidDocument).toBe(true);
 
-      // Validar paso 3: Crear
       const created = { id: 1, ...cliente, createdAt: new Date() };
       expect(created.id).toBe(1);
     });
