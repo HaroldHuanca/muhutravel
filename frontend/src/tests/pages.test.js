@@ -7,37 +7,33 @@ import Empleados from '../pages/Empleados';
 import Proveedores from '../pages/Proveedores';
 import Paquetes from '../pages/Paquetes';
 
-// Mock del servicio de API
+// 1. Mock del servicio de API corregido para coincidir con la estructura real
+// Usamos mockImplementation para devolver datos distintos según la URL
 jest.mock('../services/api', () => ({
-  clientesService: {
-    getAll: jest.fn().mockResolvedValue({ 
-      data: [
-        { id: 1, nombres: 'Juan', apellidos: 'Pérez', email: 'juan@example.com' }
-      ] 
-    }),
-    delete: jest.fn().mockResolvedValue({ data: { message: 'Eliminado' } })
-  },
-  empleadosService: {
-    getAll: jest.fn().mockResolvedValue({ 
-      data: [
-        { id: 1, nombres: 'Carlos', apellidos: 'López', puesto: 'Gerente' }
-      ] 
-    }),
-    delete: jest.fn().mockResolvedValue({ data: { message: 'Eliminado' } })
-  },
-  proveedoresService: {
-    getAll: jest.fn().mockResolvedValue({ 
-      data: [
-        { id: 1, nombre: 'Hotel XYZ', tipo: 'Hospedaje', email: 'hotel@example.com' }
-      ] 
-    }),
-    delete: jest.fn().mockResolvedValue({ data: { message: 'Eliminado' } })
-  },
-  paquetesService: {
-    getAll: jest.fn().mockResolvedValue({ 
-      data: [
-        { id: 1, nombre: 'Paquete Cusco', destino: 'Cusco', precio: 1500 }
-      ] 
+  __esModule: true,
+  default: {
+    get: jest.fn().mockImplementation((url) => {
+      if (url && url.includes('clientes')) {
+        return Promise.resolve({
+          data: [{ id: 1, nombres: 'Juan', apellidos: 'Pérez', email: 'juan@example.com' }]
+        });
+      }
+      if (url && url.includes('empleados')) {
+        return Promise.resolve({
+          data: [{ id: 1, nombres: 'Carlos', apellidos: 'López', puesto: 'Gerente' }]
+        });
+      }
+      if (url && url.includes('proveedores')) {
+        return Promise.resolve({
+          data: [{ id: 1, nombre: 'Hotel XYZ', tipo: 'Hospedaje', email: 'hotel@example.com' }]
+        });
+      }
+      if (url && url.includes('paquetes')) {
+        return Promise.resolve({
+          data: [{ id: 1, nombre: 'Paquete Cusco', destino: 'Cusco', precio: 1500 }]
+        });
+      }
+      return Promise.resolve({ data: [] });
     }),
     delete: jest.fn().mockResolvedValue({ data: { message: 'Eliminado' } })
   }
@@ -59,7 +55,8 @@ describe('Clientes Page', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Clientes')).toBeInTheDocument();
+      // CORRECCIÓN: Usamos getByRole para diferenciar el título del link del footer
+      expect(screen.getByRole('heading', { name: 'Clientes' })).toBeInTheDocument();
     });
   });
 
@@ -97,7 +94,8 @@ describe('Empleados Page', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Empleados')).toBeInTheDocument();
+      // CORRECCIÓN: Usamos getByRole
+      expect(screen.getByRole('heading', { name: 'Empleados' })).toBeInTheDocument();
     });
   });
 
@@ -123,7 +121,8 @@ describe('Proveedores Page', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Proveedores')).toBeInTheDocument();
+      // CORRECCIÓN: Usamos getByRole
+      expect(screen.getByRole('heading', { name: 'Proveedores' })).toBeInTheDocument();
     });
   });
 });
@@ -137,7 +136,8 @@ describe('Paquetes Page', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Paquetes Turísticos')).toBeInTheDocument();
+      // CORRECCIÓN: Usamos getByRole o buscamos el texto específico completo
+      expect(screen.getByRole('heading', { name: /Paquetes/i })).toBeInTheDocument();
     });
   });
 });
