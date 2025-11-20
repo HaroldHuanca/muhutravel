@@ -16,6 +16,7 @@ app.use('/api/empleados', require('./routes/empleados'));
 app.use('/api/proveedores', require('./routes/proveedores'));
 app.use('/api/paquetes', require('./routes/paquetes'));
 app.use('/api/reservas', require('./routes/reservas'));
+app.use('/api/comunicacion', require('./routes/comunicacion'));
 
 // Error handling
 app.use((err, req, res, next) => {

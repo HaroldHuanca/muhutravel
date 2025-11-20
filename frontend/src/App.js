@@ -15,6 +15,7 @@ import PaquetesEdit from './pages/PaquetesEdit';
 import Reservas from './pages/Reservas';
 import ReservasEdit from './pages/ReservasEdit';
 import Inactivos from './pages/Inactivos';
+import Comunicacion from './pages/Comunicacion';
 import './App.css';
 
 function App() {
@@ -71,6 +72,8 @@ function App() {
             <Route path="/reservas" element={<Reservas user={user} onLogout={handleLogout} />} />
             <Route path="/reservas/edit/:id" element={<ReservasEdit user={user} onLogout={handleLogout} />} />
             <Route path="/reservas/new" element={<ReservasEdit user={user} onLogout={handleLogout} />} />
+            
+            <Route path="/comunicacion" element={<Comunicacion user={user} onLogout={handleLogout} />} />
             
             <Route path="/inactivos/:tipo" element={<Inactivos user={user} onLogout={handleLogout} />} />
           </>

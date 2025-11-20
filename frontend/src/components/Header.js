@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, Menu, X } from 'lucide-react';
+import { LogOut, Menu, X, MessageCircle } from 'lucide-react';
 import './Header.css';
 
 function Header({ user, onLogout }) {
@@ -43,6 +43,10 @@ function Header({ user, onLogout }) {
           </Link>
           <Link to="/reservas" className="nav-link" onClick={() => setMenuOpen(false)}>
             Reservas
+          </Link>
+          <Link to="/comunicacion" className="nav-link" onClick={() => setMenuOpen(false)}>
+            <MessageCircle size={18} style={{ display: 'inline', marginRight: '5px' }} />
+            Comunicación
           </Link>
           {user?.rol === 'admin' && (
             <Link to="/usuarios" className="nav-link" onClick={() => setMenuOpen(false)}>

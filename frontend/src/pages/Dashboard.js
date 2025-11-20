@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import { Users, Briefcase, Package, Calendar, Building2, UserCheck } from 'lucide-react';
 import './Dashboard.css';
 
@@ -79,6 +80,7 @@ function Dashboard({ user, onLogout }) {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
