@@ -18,6 +18,8 @@ function Comunicacion({ user, onLogout }) {
   const [conexionEstablecida, setConexionEstablecida] = useState(false);
   const [buscador, setBuscador] = useState('');
   const messagesEndRef = useRef(null);
+  const pollingIntervalRef = useRef(null);
+  const lastMessageCountRef = useRef(0);
 
   // Cargar clientes al montar el componente
   useEffect(() => {
@@ -28,6 +30,25 @@ function Comunicacion({ user, onLogout }) {
   useEffect(() => {
     scrollToBottom();
   }, [mensajes]);
+
+  // Polling automático para nuevos mensajes
+  useEffect(() => {
+    if (selectedCliente && conexionEstablecida) {
+      // Cargar mensajes inmediatamente
+      cargarMensajes();
+      
+      // Configurar polling cada 2 segundos
+      pollingIntervalRef.current = setInterval(() => {
+        cargarMensajesConDeteccion();
+      }, 2000);
+
+      return () => {
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+        }
+      };
+    }
+  }, [selectedCliente, conexionEstablecida]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -119,6 +140,37 @@ function Comunicacion({ user, onLogout }) {
         }
       );
       setMensajes(response.data);
+      lastMessageCountRef.current = response.data.length;
+    } catch (err) {
+      console.error('Error al cargar mensajes:', err);
+    }
+  };
+
+  const cargarMensajesConDeteccion = async () => {
+    if (!selectedCliente) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `http://localhost:5000/api/comunicacion/mensajes/${selectedCliente.id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      // Solo actualizar si hay nuevos mensajes
+      if (response.data.length > lastMessageCountRef.current) {
+        console.log(`📨 Nuevos mensajes detectados: ${response.data.length - lastMessageCountRef.current}`);
+        setMensajes(response.data);
+        lastMessageCountRef.current = response.data.length;
+        
+        // Mostrar notificación de nuevo mensaje
+        const nuevosMensajes = response.data.slice(lastMessageCountRef.current);
+        if (nuevosMensajes.length > 0 && nuevosMensajes[0].tipo === 'recibido') {
+          setSuccess('📨 Nuevo mensaje recibido');
+          setTimeout(() => setSuccess(''), 3000);
+        }
+      }
     } catch (err) {
       console.error('Error al cargar mensajes:', err);
     }

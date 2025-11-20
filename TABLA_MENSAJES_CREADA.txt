@@ -1,0 +1,177 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                  ✅ TABLA DE MENSAJES - CREADA EXITOSAMENTE              ║
+║                                                                            ║
+║                         20 de Noviembre de 2025                           ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+🎉 ESTADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Tabla comunicacion_mensajes creada
+✅ Tabla comunicacion_conexiones creada
+✅ Índices creados
+✅ Foreign keys configuradas
+✅ Listo para usar
+
+
+📊 TABLAS CREADAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TABLA: comunicacion_mensajes
+  Campos:
+  - id (SERIAL PRIMARY KEY)
+  - cliente_id (INTEGER FK → clientes.id)
+  - mensaje (TEXT)
+  - remitente (VARCHAR(50))
+  - tipo (VARCHAR(20)) - 'enviado' o 'recibido'
+  - estado (VARCHAR(20)) - 'pending', 'sent', 'delivered', 'read'
+  - whapi_message_id (VARCHAR(255))
+  - creado_en (TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+  - actualizado_en (TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+
+  Índices:
+  - PRIMARY KEY (id)
+  - INDEX (cliente_id)
+  - INDEX (tipo)
+  - INDEX (creado_en)
+
+  Foreign Keys:
+  - cliente_id → clientes(id) ON DELETE CASCADE
+
+TABLA: comunicacion_conexiones
+  Campos:
+  - id (SERIAL PRIMARY KEY)
+  - cliente_id (INTEGER FK → clientes.id)
+  - usuario_id (INTEGER)
+  - telefono (VARCHAR(20))
+  - conectado_en (TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+  - desconectado_en (TIMESTAMP)
+  - activa (BOOLEAN DEFAULT TRUE)
+
+  Índices:
+  - PRIMARY KEY (id)
+  - INDEX (cliente_id)
+  - INDEX (activa)
+
+
+✅ VERIFICACIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Comando ejecutado:
+  psql -U postgres -d muhutravel -f crear_tabla_mensajes.sql
+
+Resultado:
+  ✅ CREATE TABLE (comunicacion_mensajes)
+  ✅ CREATE INDEX (3 índices)
+  ✅ CREATE TABLE (comunicacion_conexiones)
+  ✅ CREATE INDEX (2 índices)
+
+Verificación de tablas:
+  ✅ comunicacion_mensajes - EXISTE
+  ✅ comunicacion_conexiones - EXISTE
+
+Estructura verificada:
+  ✅ Todos los campos presentes
+  ✅ Todos los índices creados
+  ✅ Foreign keys configuradas
+
+
+🚀 PRÓXIMOS PASOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASO 1: REINICIAR BACKEND
+  $ cd backend
+  $ npm run dev
+
+  El backend ahora debería funcionar sin errores
+
+PASO 2: PROBAR ENVÍO DE MENSAJES
+  1. Abre http://localhost:3000
+  2. Ve a Comunicación
+  3. Selecciona un cliente
+  4. Haz clic en "Conectar Directamente"
+  5. Escribe un mensaje
+  6. Presiona Enter
+  7. ¡El mensaje se enviará a WhatsApp Y se guardará en BD!
+
+PASO 3: VERIFICAR EN BD
+  $ psql -U postgres -d muhutravel
+  > SELECT * FROM comunicacion_mensajes;
+
+  Deberías ver los mensajes que enviaste
+
+PASO 4: CONFIGURAR WEBHOOK EN WHAPI (PARA RECIBIR)
+  1. Abre https://whapi.cloud
+  2. Settings → Webhooks
+  3. Add Webhook:
+     URL: https://tudominio.com/api/comunicacion/webhook
+     Eventos: Messages, Message Status, Message Ack
+     Método: POST
+
+
+📋 CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Tabla comunicacion_mensajes creada
+✅ Tabla comunicacion_conexiones creada
+✅ Índices creados
+✅ Foreign keys configuradas
+✅ Verificación completada
+⏳ Backend reiniciado (próximo paso)
+⏳ Webhook configurado en whapi (próximo paso)
+
+
+🧪 PRUEBA RÁPIDA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Para verificar que todo funciona:
+
+1. Reinicia el backend:
+   $ cd backend && npm run dev
+
+2. Envía un mensaje desde la web
+
+3. Verifica en BD:
+   $ psql -U postgres -d muhutravel -c "SELECT * FROM comunicacion_mensajes;"
+
+   Deberías ver:
+   id | cliente_id | mensaje | remitente | tipo | estado | creado_en
+   ---|------------|---------|-----------|------|--------|----------
+   1  | 1          | Hola    | usuario   | enviado | sent | 2025-11-20...
+
+
+💡 NOTAS IMPORTANTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Las tablas están creadas en la BD muhutravel
+2. El backend ahora guardará todos los mensajes enviados
+3. Cuando configures el webhook en whapi, también guardará los mensajes recibidos
+4. Los mensajes se pueden consultar con: GET /api/comunicacion/mensajes/:clienteId
+
+
+🎯 RESULTADO FINAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ANTES:
+  ❌ Error: no existe la relación «comunicacion_mensajes»
+  ❌ Mensajes no se guardaban
+  ❌ No había historial
+
+AHORA:
+  ✅ Tabla creada
+  ✅ Mensajes se guardan automáticamente
+  ✅ Historial disponible
+  ✅ Listo para recibir mensajes
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                  ¡TABLA CREADA EXITOSAMENTE! ✅                          ║
+║                                                                            ║
+║                  Próximo paso: Reiniciar backend                          ║
+║                                                                            ║
+║                  $ cd backend && npm run dev                              ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝

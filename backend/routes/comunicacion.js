@@ -95,10 +95,23 @@ router.post('/enviar', verificarToken, async (req, res) => {
 
         console.log('✅ Mensaje enviado exitosamente a través de whapi:', response.data);
 
+        // Guardar mensaje en la base de datos
+        const messageId = response.data.message?.id || response.data.result?.id || `msg_${Date.now()}`;
+        try {
+          await db.query(
+            'INSERT INTO comunicacion_mensajes (cliente_id, mensaje, remitente, tipo, estado, whapi_message_id) VALUES ($1, $2, $3, $4, $5, $6)',
+            [clienteId, mensaje, 'usuario', 'enviado', 'sent', messageId]
+          );
+          console.log('💾 Mensaje guardado en BD');
+        } catch (dbError) {
+          console.error('⚠️ Error al guardar mensaje en BD:', dbError.message);
+          // No fallar la respuesta si falla la BD
+        }
+
         res.json({
           success: true,
           message: 'Mensaje enviado correctamente',
-          messageId: response.data.message?.id || response.data.result?.id || `msg_${Date.now()}`,
+          messageId: messageId,
           clienteId,
           timestamp: new Date().toISOString(),
           whapi: true
@@ -140,14 +153,21 @@ router.get('/mensajes/:clienteId', verificarToken, async (req, res) => {
   try {
     const { clienteId } = req.params;
 
-    // Aquí se obtendría los mensajes de la base de datos
-    // const result = await db.query(
-    //   'SELECT * FROM comunicacion_mensajes WHERE cliente_id = $1 ORDER BY enviado_en ASC',
-    //   [clienteId]
-    // );
+    // Obtener mensajes de la base de datos
+    const result = await db.query(
+      'SELECT id, mensaje, remitente, tipo, estado, creado_en FROM comunicacion_mensajes WHERE cliente_id = $1 ORDER BY creado_en ASC',
+      [clienteId]
+    );
 
-    // Por ahora, retornar un array vacío
-    const mensajes = [];
+    // Formatear mensajes para el frontend
+    const mensajes = result.rows.map(msg => ({
+      id: msg.id,
+      texto: msg.mensaje,
+      remitente: msg.remitente === 'usuario' ? 'Yo' : msg.remitente,
+      timestamp: new Date(msg.creado_en).toLocaleTimeString('es-PE'),
+      tipo: msg.tipo,
+      estado: msg.estado
+    }));
 
     res.json(mensajes);
   } catch (error) {
@@ -156,30 +176,151 @@ router.get('/mensajes/:clienteId', verificarToken, async (req, res) => {
   }
 });
 
-// Webhook para recibir mensajes de WhatsApp (opcional)
+// Webhook para recibir mensajes de WhatsApp
 router.post('/webhook', async (req, res) => {
   try {
     const { messages } = req.body;
 
+    console.log('📨 Webhook recibido:', JSON.stringify(req.body, null, 2));
+
     if (!messages || messages.length === 0) {
-      return res.status(400).json({ error: 'No hay mensajes' });
+      console.log('⚠️ Webhook recibido sin mensajes');
+      return res.json({ success: true, message: 'Sin mensajes' });
     }
+
+    console.log(`📨 Webhook recibido con ${messages.length} mensaje(s)`);
+
+    const procesados = [];
+    const errores = [];
 
     // Procesar cada mensaje recibido
     for (const message of messages) {
-      console.log('Mensaje recibido:', message);
-      
-      // Guardar el mensaje en la base de datos
-      // await db.query(
-      //   'INSERT INTO comunicacion_mensajes (cliente_id, mensaje, remitente, tipo, recibido_en) VALUES ($1, $2, $3, $4, NOW())',
-      //   [message.from, message.body, 'cliente', 'recibido']
-      // );
+      try {
+        console.log('📩 Procesando mensaje:', {
+          id: message.id,
+          from: message.from,
+          body: message.body,
+          timestamp: message.timestamp
+        });
+
+        // Validar que el mensaje tenga contenido
+        if (!message.body || !message.from) {
+          console.warn('⚠️ Mensaje incompleto, saltando');
+          continue;
+        }
+
+        // Extraer número de teléfono (remover @s.whatsapp.net si existe)
+        let telefono = message.from?.replace('@s.whatsapp.net', '') || message.from;
+        
+        // Normalizar número de teléfono
+        telefono = telefono.replace(/\D/g, '');
+        
+        console.log(`🔍 Buscando cliente con teléfono: ${telefono}`);
+
+        // Buscar el cliente por teléfono
+        const clienteResult = await db.query(
+          'SELECT id FROM clientes WHERE telefono = $1 LIMIT 1',
+          [telefono]
+        );
+
+        if (clienteResult.rows.length === 0) {
+          console.warn(`⚠️ Cliente no encontrado para teléfono: ${telefono}`);
+          errores.push({ telefono, razon: 'Cliente no encontrado' });
+          continue;
+        }
+
+        const clienteId = clienteResult.rows[0].id;
+        console.log(`✅ Cliente encontrado: ${clienteId}`);
+
+        // Verificar si el mensaje ya existe
+        const existeResult = await db.query(
+          'SELECT id FROM comunicacion_mensajes WHERE whapi_message_id = $1',
+          [message.id]
+        );
+
+        if (existeResult.rows.length > 0) {
+          console.log(`⚠️ Mensaje duplicado, saltando: ${message.id}`);
+          continue;
+        }
+
+        // Guardar el mensaje en la base de datos
+        const insertResult = await db.query(
+          'INSERT INTO comunicacion_mensajes (cliente_id, mensaje, remitente, tipo, estado, whapi_message_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+          [clienteId, message.body, telefono, 'recibido', 'delivered', message.id]
+        );
+
+        console.log(`✅ Mensaje guardado en BD: ${insertResult.rows[0].id}`);
+        procesados.push({
+          clienteId,
+          messageId: message.id,
+          dbId: insertResult.rows[0].id
+        });
+      } catch (msgError) {
+        console.error('❌ Error procesando mensaje individual:', msgError);
+        errores.push({ error: msgError.message });
+      }
     }
 
-    res.json({ success: true, message: 'Mensajes procesados' });
+    console.log(`✅ Webhook procesado: ${procesados.length} mensajes guardados, ${errores.length} errores`);
+
+    res.json({ 
+      success: true, 
+      message: 'Mensajes procesados correctamente',
+      procesados: procesados.length,
+      errores: errores.length,
+      detalles: { procesados, errores }
+    });
   } catch (error) {
-    console.error('Error al procesar webhook:', error);
-    res.status(500).json({ error: 'Error al procesar webhook' });
+    console.error('❌ Error al procesar webhook:', error);
+    res.status(500).json({ error: 'Error al procesar webhook', detalles: error.message });
+  }
+});
+
+// Endpoint de prueba para simular webhook
+router.post('/webhook/test', async (req, res) => {
+  try {
+    const { clienteId, telefono, mensaje } = req.body;
+
+    if (!clienteId || !telefono || !mensaje) {
+      return res.status(400).json({ error: 'Faltan datos requeridos' });
+    }
+
+    console.log(`🧪 Simulando webhook de prueba para cliente ${clienteId}`);
+
+    // Simular webhook
+    const testMessage = {
+      id: `test_${Date.now()}`,
+      from: `${telefono}@s.whatsapp.net`,
+      body: mensaje,
+      timestamp: Math.floor(Date.now() / 1000)
+    };
+
+    // Procesar como webhook normal
+    const clienteResult = await db.query(
+      'SELECT id FROM clientes WHERE id = $1',
+      [clienteId]
+    );
+
+    if (clienteResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+
+    // Guardar el mensaje
+    const insertResult = await db.query(
+      'INSERT INTO comunicacion_mensajes (cliente_id, mensaje, remitente, tipo, estado, whapi_message_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      [clienteId, mensaje, telefono, 'recibido', 'delivered', testMessage.id]
+    );
+
+    console.log(`✅ Mensaje de prueba guardado: ${insertResult.rows[0].id}`);
+
+    res.json({
+      success: true,
+      message: 'Mensaje de prueba guardado',
+      messageId: insertResult.rows[0].id
+    });
+  } catch (error) {
+    console.error('❌ Error en webhook de prueba:', error);
+    res.status(500).json({ error: 'Error al procesar webhook de prueba', detalles: error.message });
   }
 });
 
