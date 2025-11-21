@@ -11,7 +11,9 @@ router.get('/', verifyToken, async (req, res) => {
     const query = `
       SELECT 
         p.id, p.nombre, p.destino, p.duracion_dias, p.precio, p.cupos, 
-        p.fecha_inicio, p.fecha_fin, p.proveedor_id, p.empleado_id, 
+        TO_CHAR(p.fecha_inicio, 'YYYY-MM-DD') as fecha_inicio,
+        TO_CHAR(p.fecha_fin, 'YYYY-MM-DD') as fecha_fin,
+        p.proveedor_id, p.empleado_id, 
         p.activo, p.creado_en,
         pr.nombre as proveedor_nombre,
         e.nombres as empleado_nombres, e.apellidos as empleado_apellidos
@@ -36,7 +38,9 @@ router.get('/inactivos/lista', verifyToken, async (req, res) => {
     const query = `
       SELECT 
         p.id, p.nombre, p.destino, p.duracion_dias, p.precio, p.cupos, 
-        p.fecha_inicio, p.fecha_fin, p.proveedor_id, p.empleado_id, 
+        TO_CHAR(p.fecha_inicio, 'YYYY-MM-DD') as fecha_inicio,
+        TO_CHAR(p.fecha_fin, 'YYYY-MM-DD') as fecha_fin,
+        p.proveedor_id, p.empleado_id, 
         p.activo, p.creado_en,
         pr.nombre as proveedor_nombre,
         e.nombres as empleado_nombres, e.apellidos as empleado_apellidos
@@ -60,7 +64,9 @@ router.get('/:id', verifyToken, async (req, res) => {
     const result = await pool.query(
       `SELECT 
         p.id, p.nombre, p.destino, p.duracion_dias, p.precio, p.cupos, 
-        p.fecha_inicio, p.fecha_fin, p.proveedor_id, p.empleado_id, 
+        TO_CHAR(p.fecha_inicio, 'YYYY-MM-DD') as fecha_inicio,
+        TO_CHAR(p.fecha_fin, 'YYYY-MM-DD') as fecha_fin,
+        p.proveedor_id, p.empleado_id, 
         p.activo, p.creado_en,
         pr.nombre as proveedor_nombre,
         e.nombres as empleado_nombres, e.apellidos as empleado_apellidos

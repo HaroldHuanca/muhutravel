@@ -49,7 +49,17 @@ function PaquetesEdit({ user, onLogout }) {
     setLoading(true);
     try {
       const response = await paquetesService.getById(id);
-      setFormData(response.data);
+      const data = response.data;
+      
+      // Asegurar que las fechas estén en formato YYYY-MM-DD para el input type="date"
+      if (data.fecha_inicio) {
+        data.fecha_inicio = data.fecha_inicio.split('T')[0];
+      }
+      if (data.fecha_fin) {
+        data.fecha_fin = data.fecha_fin.split('T')[0];
+      }
+      
+      setFormData(data);
     } catch (err) {
       setError('Error al cargar paquete');
     } finally {
