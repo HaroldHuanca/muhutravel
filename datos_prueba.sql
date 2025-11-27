@@ -7,182 +7,133 @@ VALUES
 
 INSERT INTO clientes (nombres, apellidos, documento, telefono, email, ciudad, pais)
 VALUES
-('Juan', 'Pérez Gómez', 'DNI12345678', '987654321', 'juanpg@gmail.com', 'Lima', 'Peru'),
-('María', 'Lopez Sanchez', 'DNI87654321', '987111222', 'marialopez@gmail.com', 'Arequipa', 'Peru'),
-('Carlos', 'Quispe Huamán', 'DNI44556677', '944222333', 'carlosqh@gmail.com', 'Cusco', 'Peru'),
-('Ana', 'Ramos Torres', 'DNI99887766', '955111333', 'anaramos@gmail.com', 'Trujillo', 'Peru'),
-('Jose', 'Mamani Quispe', 'DNI11223344', '922334455', 'josemamani@gmail.com', 'Puno', 'Peru'),
-('Daniel', 'Smith', 'PAS12345', '555111222', 'dsmith@yahoo.com', 'New York', 'USA'),
-('Laura', 'Johnson', 'PAS67890', '555333444', 'laura.j@gmail.com', 'Los Angeles', 'USA'),
-('Keiko', 'Tanaka', 'PAS99887', '444555666', 'keiko.t@japan.jp', 'Tokyo', 'Japan'),
-('Hans', 'Müller', 'PAS55443', '333777999', 'hans.muller@germany.de', 'Berlin', 'Germany'),
-('Elena', 'Garcia Ruiz', 'CE44551231', '955674312', 'elenag@gmail.com', 'Madrid', 'Spain'),
-
-('Miguel', 'Chavez Soto', 'DNI12233445', '923445566', 'miguelchs@gmail.com', 'Lima', 'Peru'),
-('Lucía', 'Valdez Ramos', 'DNI66778899', '988776655', 'lucia.vr@gmail.com', 'Cusco', 'Peru'),
-('Pedro', 'Huarca Ccoris', 'DNI99884422', '987556699', 'pedrohuarca@gmail.com', 'Cusco', 'Peru'),
-('Sofía', 'Mendoza Ccori', 'DNI55443322', '921334455', 'sofimen@gmail.com', 'Arequipa', 'Peru'),
-('Diego', 'Cáceres Ludeña', 'DNI11229988', '911223344', 'diegocl@gmail.com', 'Piura', 'Peru'),
-('Julia', 'Renner', 'PAS777222', '444667788', 'renner.julia@gmail.com', 'Toronto', 'Canada'),
-('Marco', 'Bianchi', 'PAS889977', '321444555', 'marco.bianchi@italy.it', 'Roma', 'Italy'),
-('Chloe', 'Dupont', 'PAS998877', '555998877', 'chloe.dupont@france.fr', 'Paris', 'France'),
-('Oliver', 'Brown', 'PAS564738', '555777888', 'obrown@gmail.com', 'London', 'UK'),
-('Sven', 'Larsson', 'PAS884422', '332211445', 'sven.l@sweden.se', 'Stockholm', 'Sweden'),
-
-('Renato', 'Cruz Palomino', 'DNI23412233', '912233445', 'renatocp@gmail.com', 'Lima', 'Peru'),
-('Valeria', 'Ticona Condori', 'DNI55667788', '933445521', 'valeriaticona@gmail.com', 'Puno', 'Peru'),
-('Andrea', 'Morales Diaz', 'DNI77889955', '921556788', 'andrea.md@gmail.com', 'Tacna', 'Peru'),
-('Fernando', 'Huayhua Torres', 'DNI44559922', '955667788', 'fernandoht@gmail.com', 'Cusco', 'Peru'),
-('Patricia', 'Cjuiro Mesa', 'DNI66773344', '911442233', 'patriciacm@gmail.com', 'Ica', 'Peru'),
-
-('Isabella', 'Martinez', 'PAS102938', '555777221', 'isabella.m@gmail.com', 'Miami', 'USA'),
-('George', 'Wilson', 'PAS112233', '555444221', 'geo.wilson@gmail.com', 'Chicago', 'USA'),
-('Lukas', 'Schmidt', 'PAS223344', '333222111', 'lukas.sch@gmail.com', 'Munich', 'Germany'),
-('Natalie', 'Fischer', 'PAS332211', '333888555', 'natalie.f@gmail.com', 'Vienna', 'Austria'),
-('Yuki', 'Sato', 'PAS445566', '444333221', 'yuki.s@japan.jp', 'Osaka', 'Japan'),
-
-('Thiago', 'Santos', 'PAS556677', '666777888', 'thiago.brazil@gmail.com', 'Rio de Janeiro', 'Brazil'),
-('Camila', 'Gonzalez', 'PAS667788', '555666777', 'camila.ar@gmail.com', 'Buenos Aires', 'Argentina'),
-('Mateo', 'Torres', 'PAS778899', '777888999', 'mateo.chile@gmail.com', 'Santiago', 'Chile'),
-('Lucia', 'Fernandez', 'PAS889900', '888999000', 'lucia.col@gmail.com', 'Bogotá', 'Colombia'),
-('Andrés', 'Orozco', 'PAS990011', '999000111', 'andres.ec@gmail.com', 'Quito', 'Ecuador');
+('Juan', 'Quispe Mamani', 'DNI40506070', '987654321', 'juan.quispe@gmail.com', 'Cusco', 'Peru'),
+('Maria', 'Flores Huaman', 'DNI41516171', '987654322', 'maria.flores@gmail.com', 'Cusco', 'Peru'),
+('Carlos', 'Sanchez Vega', 'DNI42526272', '987654323', 'carlos.sanchez@gmail.com', 'Lima', 'Peru'),
+('Ana', 'Torres Lopez', 'DNI43536373', '987654324', 'ana.torres@gmail.com', 'Arequipa', 'Peru'),
+('Luis', 'Gomez Diaz', 'DNI44546474', '987654325', 'luis.gomez@gmail.com', 'Lima', 'Peru'),
+('Elena', 'Rojas Cruz', 'DNI45556575', '987654326', 'elena.rojas@gmail.com', 'Cusco', 'Peru'),
+('Pedro', 'Castillo Ruiz', 'DNI46566676', '987654327', 'pedro.castillo@gmail.com', 'Puno', 'Peru'),
+('Sofia', 'Mendoza Aliaga', 'DNI47576777', '987654328', 'sofia.mendoza@gmail.com', 'Tacna', 'Peru'),
+('Jorge', 'Salazar Pinto', 'DNI48586878', '987654329', 'jorge.salazar@gmail.com', 'Cusco', 'Peru'),
+('Lucia', 'Vargas Soto', 'DNI49596979', '987654330', 'lucia.vargas@gmail.com', 'Lima', 'Peru'),
+('John', 'Smith', 'PAS100001', '123456789', 'john.smith@email.com', 'New York', 'USA'),
+('Emily', 'Johnson', 'PAS100002', '123456790', 'emily.johnson@email.com', 'Los Angeles', 'USA'),
+('Michael', 'Brown', 'PAS100003', '123456791', 'michael.brown@email.com', 'Chicago', 'USA'),
+('Sarah', 'Davis', 'PAS100004', '123456792', 'sarah.davis@email.com', 'Houston', 'USA'),
+('David', 'Wilson', 'PAS100005', '123456793', 'david.wilson@email.com', 'Phoenix', 'USA'),
+('Emma', 'Taylor', 'PAS100006', '123456794', 'emma.taylor@email.com', 'London', 'UK'),
+('James', 'Anderson', 'PAS100007', '123456795', 'james.anderson@email.com', 'Manchester', 'UK'),
+('Olivia', 'Thomas', 'PAS100008', '123456796', 'olivia.thomas@email.com', 'Liverpool', 'UK'),
+('Robert', 'Martinez', 'PAS100009', '123456797', 'robert.martinez@email.com', 'Madrid', 'Spain'),
+('Isabella', 'Hernandez', 'PAS100010', '123456798', 'isabella.hernandez@email.com', 'Barcelona', 'Spain'),
+('William', 'Lopez', 'PAS100011', '123456799', 'william.lopez@email.com', 'Valencia', 'Spain'),
+('Sophia', 'Gonzalez', 'PAS100012', '123456800', 'sophia.gonzalez@email.com', 'Seville', 'Spain'),
+('Liam', 'Perez', 'PAS100013', '123456801', 'liam.perez@email.com', 'Paris', 'France'),
+('Ava', 'Wilson', 'PAS100014', '123456802', 'ava.wilson@email.com', 'Lyon', 'France'),
+('Noah', 'Anderson', 'PAS100015', '123456803', 'noah.anderson@email.com', 'Marseille', 'France'),
+('Mia', 'Thomas', 'PAS100016', '123456804', 'mia.thomas@email.com', 'Berlin', 'Germany'),
+('Ethan', 'Martinez', 'PAS100017', '123456805', 'ethan.martinez@email.com', 'Munich', 'Germany'),
+('Charlotte', 'Hernandez', 'PAS100018', '123456806', 'charlotte.hernandez@email.com', 'Hamburg', 'Germany'),
+('Alexander', 'Lopez', 'PAS100019', '123456807', 'alexander.lopez@email.com', 'Rome', 'Italy'),
+('Amelia', 'Gonzalez', 'PAS100020', '123456808', 'amelia.gonzalez@email.com', 'Milan', 'Italy'),
+('Benjamin', 'Perez', 'PAS100021', '123456809', 'benjamin.perez@email.com', 'Naples', 'Italy'),
+('Harper', 'Wilson', 'PAS100022', '123456810', 'harper.wilson@email.com', 'Tokyo', 'Japan'),
+('Lucas', 'Anderson', 'PAS100023', '123456811', 'lucas.anderson@email.com', 'Osaka', 'Japan'),
+('Evelyn', 'Thomas', 'PAS100024', '123456812', 'evelyn.thomas@email.com', 'Kyoto', 'Japan'),
+('Mason', 'Martinez', 'PAS100025', '123456813', 'mason.martinez@email.com', 'Sydney', 'Australia'),
+('Abigail', 'Hernandez', 'PAS100026', '123456814', 'abigail.hernandez@email.com', 'Melbourne', 'Australia'),
+('Logan', 'Lopez', 'PAS100027', '123456815', 'logan.lopez@email.com', 'Brisbane', 'Australia'),
+('Ella', 'Gonzalez', 'PAS100028', '123456816', 'ella.gonzalez@email.com', 'Toronto', 'Canada'),
+('Jackson', 'Perez', 'PAS100029', '123456817', 'jackson.perez@email.com', 'Vancouver', 'Canada'),
+('Avery', 'Wilson', 'PAS100030', '123456818', 'avery.wilson@email.com', 'Montreal', 'Canada');
 
 INSERT INTO empleados (nombres, apellidos, puesto, telefono, email)
 VALUES
-('Luis', 'Salazar Pinedo', 'Asesor de Viajes', '900111222', 'luissp@empresa.com'),
-('Carla', 'Vega Montes', 'Asesora de Reservas', '900333444', 'carlavm@empresa.com'),
-('Ricardo', 'Quispe Ramos', 'Guía Turístico', '900555666', 'ricardoqr@empresa.com'),
-('Natalia', 'Huamán Ccori', 'Guía Turística', '900777888', 'nathc@empresa.com'),
-('Jorge', 'Cárdenas Díaz', 'Soporte', '900999000', 'jorgecd@empresa.com'),
-('Erika', 'Paredes Lazo', 'Asesora', '977111222', 'erikapl@empresa.com'),
-('Samuel', 'Mamani Flores', 'Agente Senior', '955333444', 'samuelmf@empresa.com'),
-('Viviana', 'Torres Soto', 'Ventas', '988444555', 'viviants@empresa.com'),
-('Rafael', 'Quiroz Ramos', 'Asesor', '977555666', 'rafaelqr@empresa.com'),
-('Diana', 'Barrios Núñez', 'Asesora', '933666777', 'dianabn@empresa.com');
+('Rosa', 'Huayta Caceres', 'Asesor de Viajes', '980111222', 'rosa.huayta@muhutravel.com'),
+('Miguel', 'Angel Condori', 'Guía Turístico', '980111223', 'miguel.condori@muhutravel.com'),
+('Carmen', 'Salinas Vega', 'Coordinador de Operaciones', '980111224', 'carmen.salinas@muhutravel.com'),
+('Jose', 'Luis Mamani', 'Conductor', '980111225', 'jose.mamani@muhutravel.com'),
+('Ana', 'Maria Quispe', 'Asesor de Ventas', '980111226', 'ana.quispe@muhutravel.com'),
+('Carlos', 'Alberto Rojas', 'Guía de Montaña', '980111227', 'carlos.rojas@muhutravel.com'),
+('Lucia', 'Fernandez Soto', 'Recepcionista', '980111228', 'lucia.fernandez@muhutravel.com'),
+('Pedro', 'Pablo Castillo', 'Logística', '980111229', 'pedro.castillo@muhutravel.com'),
+('Sofia', 'Elena Mendoza', 'Marketing', '980111230', 'sofia.mendoza@muhutravel.com'),
+('Jorge', 'Luis Salazar', 'Gerente General', '980111231', 'jorge.salazar@muhutravel.com');
 
 INSERT INTO proveedores (nombre, tipo, telefono, email, pais, ciudad)
 VALUES
-('Hotel Inti Raymi', 'Hotel', '984111222', 'contacto@intiraymi.pe', 'Peru', 'Cusco'),
-('Hotel Qoricancha', 'Hotel', '984222333', 'info@qoricancha.pe', 'Peru', 'Cusco'),
-('PeruRail', 'Transporte', '984333444', 'ventas@perurail.com', 'Peru', 'Cusco'),
-('Inca Rail', 'Transporte', '984444555', 'info@incarail.com', 'Peru', 'Cusco'),
-('Sacred Valley Adventures', 'Agencia Local', '984555666', 'contact@sva.pe', 'Peru', 'Urubamba'),
-('Andean Paths', 'Agencia Local', '984666777', 'info@andeanpaths.pe', 'Peru', 'Ollantaytambo'),
-('Mountain Explore', 'Tours', '984777888', 'mountainxp@gmail.com', 'Chile', 'Arica'),
-('Travel Andes', 'Tours', '984888999', 'contact@travelandes.ec', 'Ecuador', 'Quito'),
-('Global Tour', 'Tours', '333222111', 'globaltour@gmail.com', 'USA', 'Miami'),
-('Hotel Sumaq', 'Hotel', '984999000', 'sumaqhotel@aguascalientes.pe', 'Peru', 'Aguas Calientes');
+('Hotel Monasterio', 'Hotel', '084222333', 'reservas@monasterio.com', 'Peru', 'Cusco'),
+('PeruRail', 'Transporte', '084222334', 'ventas@perurail.com', 'Peru', 'Cusco'),
+('Inca Rail', 'Transporte', '084222335', 'reservas@incarail.com', 'Peru', 'Cusco'),
+('Restaurante Chicha', 'Restaurante', '084222336', 'reservas@chicha.com', 'Peru', 'Cusco'),
+('Boleto Turistico Cusco', 'Entradas', '084222337', 'info@cosituc.gob.pe', 'Peru', 'Cusco'),
+('Consettur', 'Transporte', '084222338', 'ventas@consettur.com', 'Peru', 'Aguas Calientes'),
+('Hotel Casa Andina', 'Hotel', '084222339', 'reservas@casa-andina.com', 'Peru', 'Cusco'),
+('Restaurante Tunupa', 'Restaurante', '084222340', 'reservas@tunupa.com', 'Peru', 'Urubamba'),
+('Ministerio de Cultura', 'Entradas', '084222341', 'info@culturacusco.gob.pe', 'Peru', 'Cusco'),
+('Hotel Aranwa', 'Hotel', '084222342', 'reservas@aranwa.com', 'Peru', 'Urubamba');
 
 INSERT INTO paquetes (nombre, destino, duracion_dias, precio, cupos, fecha_inicio, fecha_fin, proveedor_id, empleado_id)
 VALUES
-('Machu Picchu Full Day', 'Machu Picchu', 1, 350.00, 30, '2025-01-10', '2025-01-10', 3, 1),
-('Valle Sagrado + Pisaq', 'Valle Sagrado', 1, 150.00, 40, '2025-01-05', '2025-01-05', 5, 2),
-('City Tour Cusco', 'Cusco', 1, 80.00, 50, '2025-01-02', '2025-01-02', 5, 3),
-('Montaña de 7 Colores', 'Vinicunca', 1, 120.00, 35, '2025-01-12', '2025-01-12', 6, 4),
-('Laguna Humantay', 'Soraypampa', 1, 140.00, 30, '2025-01-15', '2025-01-15', 6, 1),
-('Maras y Moray', 'Maras', 1, 110.00, 45, '2025-01-08', '2025-01-08', 5, 5),
-('Inca Jungle 4D/3N', 'Cusco - Santa Teresa', 4, 650.00, 20, '2025-02-01', '2025-02-04', 7, 6),
-('Camino Inca 2D/1N', 'Machu Picchu', 2, 500.00, 15, '2025-02-10', '2025-02-11', 7, 6),
-('Salkantay Trek 5D', 'Salkantay', 5, 900.00, 15, '2025-03-01', '2025-03-05', 7, 7),
-('Valle Sur + Tipón', 'Tipón', 1, 90.00, 40, '2025-01-06', '2025-01-06', 5, 8),
-('Aguas Calientes Tour', 'Aguas Calientes', 1, 180.00, 30, '2025-01-14', '2025-01-14', 10, 4),
-('Qoricancha + Sacsayhuamán', 'Cusco', 1, 75.00, 40, '2025-01-03', '2025-01-03', 5, 3),
-('Tour Cusco Imperial 3D/2N', 'Cusco', 3, 400.00, 25, '2025-02-05', '2025-02-07', 1, 9),
-('Tour Montaña Palcoyo', 'Palcoyo', 1, 130.00, 25, '2025-01-22', '2025-01-22', 6, 2),
-('Tour Valle Rojo', 'Pitumarca', 1, 140.00, 20, '2025-01-25', '2025-01-25', 6, 10);
+('Machu Picchu Full Day', 'Machu Picchu', 1, 350.00, 20, '2025-05-01', '2025-05-01', 2, 1),
+('Valle Sagrado VIP', 'Valle Sagrado', 1, 120.00, 15, '2025-05-02', '2025-05-02', 8, 2),
+('Montaña de 7 Colores', 'Vinicunca', 1, 100.00, 25, '2025-05-03', '2025-05-03', 4, 3),
+('Laguna Humantay', 'Soraypampa', 1, 110.00, 20, '2025-05-04', '2025-05-04', 4, 4),
+('City Tour Cusco', 'Cusco', 1, 60.00, 30, '2025-05-05', '2025-05-05', 5, 5),
+('Camino Inca 4D/3N', 'Machu Picchu', 4, 650.00, 10, '2025-06-01', '2025-06-04', 9, 6),
+('Salkantay Trek 5D/4N', 'Machu Picchu', 5, 550.00, 12, '2025-06-05', '2025-06-09', 9, 2),
+('Choquequirao Trek 4D/3N', 'Choquequirao', 4, 450.00, 8, '2025-06-10', '2025-06-13', 4, 6),
+('Tour Maras Moray', 'Maras', 1, 80.00, 20, '2025-05-06', '2025-05-06', 4, 1),
+('Valle Sur Tipon', 'Tipon', 1, 70.00, 20, '2025-05-07', '2025-05-07', 4, 3),
+('Cusco Magico 3D/2N', 'Cusco', 3, 400.00, 15, '2025-07-01', '2025-07-03', 1, 5),
+('Aventura en los Andes 5D/4N', 'Cusco', 5, 700.00, 10, '2025-07-05', '2025-07-09', 7, 2),
+('Ruta del Sol', 'Puno', 1, 60.00, 30, '2025-05-08', '2025-05-08', 4, 4),
+('Palcoyo Montaña Alternativa', 'Palcoyo', 1, 90.00, 15, '2025-05-09', '2025-05-09', 4, 6),
+('Waqrapukara Trek', 'Acomayo', 1, 100.00, 15, '2025-05-10', '2025-05-10', 4, 2);
 
 INSERT INTO reservas (numero_reserva, cliente_id, paquete_id, empleado_id, cantidad_personas, precio_total, estado, comentario)
 VALUES
-('RES001', 1, 1, 1, 2, 700.00, 'confirmada', 'Cliente peruano'),
-('RES002', 2, 2, 2, 1, 150.00, 'pendiente', ''),
-('RES003', 6, 1, 1, 1, 350.00, 'confirmada', 'Turista de USA'),
-('RES004', 8, 4, 4, 3, 360.00, 'confirmada', ''),
-('RES005', 10, 5, 1, 2, 280.00, 'pendiente', ''),
-('RES006', 3, 3, 3, 1, 80.00, 'confirmada', ''),
-('RES007', 7, 7, 6, 2, 1300.00, 'confirmada', ''),
-('RES008', 12, 1, 2, 1, 350.00, 'cancelada', 'Motivos personales'),
-('RES009', 15, 11, 3, 4, 720.00, 'confirmada', ''),
-('RES010', 20, 8, 6, 1, 500.00, 'pendiente', ''),
-('RES011', 25, 14, 8, 2, 260.00, 'confirmada', ''),
-('RES012', 30, 15, 10, 1, 140.00, 'pendiente', ''),
-('RES013', 28, 9, 7, 1, 900.00, 'confirmada', ''),
-('RES014', 32, 6, 5, 3, 330.00, 'confirmada', ''),
-('RES015', 5, 1, 1, 2, 700.00, 'confirmada', ''),
-('RES016', 18, 12, 3, 1, 75.00, 'cancelada', 'Cambio de fecha'),
-('RES017', 35, 3, 4, 1, 80.00, 'pendiente', ''),
-('RES018', 30, 4, 4, 2, 240.00, 'confirmada', ''),
-('RES019', 7, 13, 9, 2, 800.00, 'confirmada', ''),
-('RES020', 22, 10, 8, 1, 90.00, 'pendiente', '');
+('RES-001', 1, 1, 1, 2, 700.00, 'confirmada', 'Pago adelantado 50%'),
+('RES-002', 2, 2, 2, 1, 120.00, 'pendiente', 'Confirmar hotel'),
+('RES-003', 3, 3, 3, 3, 300.00, 'confirmada', 'Vegetarianos'),
+('RES-004', 4, 4, 4, 2, 220.00, 'cancelada', 'Problemas de salud'),
+('RES-005', 5, 5, 5, 4, 240.00, 'confirmada', 'Recojo del aeropuerto'),
+('RES-006', 6, 6, 6, 1, 650.00, 'pendiente', 'Verificar disponibilidad Camino Inca'),
+('RES-007', 7, 7, 2, 2, 1100.00, 'confirmada', 'Luna de miel'),
+('RES-008', 8, 8, 6, 1, 450.00, 'confirmada', 'Mochilero'),
+('RES-009', 9, 9, 1, 2, 160.00, 'pendiente', 'Pago pendiente'),
+('RES-010', 10, 10, 3, 3, 210.00, 'confirmada', 'Familia con niños'),
+('RES-011', 11, 11, 5, 2, 800.00, 'confirmada', 'Hotel 5 estrellas'),
+('RES-012', 12, 12, 2, 1, 700.00, 'pendiente', 'Consulta por equipo de camping'),
+('RES-013', 13, 13, 4, 2, 120.00, 'confirmada', 'Asientos ventana'),
+('RES-014', 14, 14, 6, 1, 90.00, 'cancelada', 'Vuelo cancelado'),
+('RES-015', 15, 15, 2, 2, 200.00, 'confirmada', 'Amigos'),
+('RES-016', 16, 1, 1, 1, 350.00, 'pendiente', 'Solo tour'),
+('RES-017', 17, 2, 2, 2, 240.00, 'confirmada', 'Aniversario'),
+('RES-018', 18, 3, 3, 1, 100.00, 'confirmada', 'Fotografo'),
+('RES-019', 19, 4, 4, 2, 220.00, 'pendiente', 'Duda sobre altura'),
+('RES-020', 20, 5, 5, 3, 180.00, 'confirmada', 'Grupo de estudiantes');
 
-INSERT INTO reserva_proveedores (reserva_id, proveedor_id, tipo_servicio, costo, notas) VALUES
--- RES001 (Paquete 1: proveedor 3)
-(21, 3, 'Transporte', 120.00, 'Tren a Machu Picchu'),
-(21, 1, 'Hotel', 180.00, 'Pernocte en Cusco'),
-
--- RES002 (Paquete 2: proveedor 5)
-(22, 5, 'Agencia Local', 80.00, 'Tour en Valle Sagrado'),
-
--- RES003 (Paquete 1: proveedor 3)
-(23, 3, 'Transporte', 120.00, 'Turista de USA'),
-(23, 2, 'Hotel', 200.00, 'Alojamiento estándar'),
-
--- RES004 (Paquete 4: proveedor 6)
-(24, 6, 'Agencia Local', 100.00, 'Guía local'),
-(24, 3, 'Transporte', 110.00, 'Movilidad'),
-
--- RES005 (Paquete 5: proveedor 6)
-(25, 6, 'Agencia Local', 90.00, 'Operador en Soraypampa'),
-
--- RES006 (Paquete 3: proveedor 5)
-(26, 5, 'Agencia Local', 60.00, 'City Tour Cusco'),
-
--- RES007 (Paquete 7: proveedor 7)
-(27, 7, 'Tours', 250.00, 'Ruta de aventura Inca Jungle'),
-(27, 3, 'Transporte', 150.00, 'Movilidad hacia Santa Teresa'),
-
--- RES008 (Paquete 1: proveedor 3)
-(28, 3, 'Transporte', 120.00, 'Cancelado luego'),
-
--- RES009 (Paquete 11: proveedor 10)
-(29, 10, 'Hotel', 180.00, 'Alojamiento en Aguas Calientes'),
-(29, 3, 'Transporte', 130.00, 'Tren PeruRail'),
-
--- RES010 (Paquete 8: proveedor 7)
-(30, 7, 'Tours', 180.00, 'Trekking 2D/1N'),
-(30, 3, 'Transporte', 120.00, 'Tren base'),
-
--- RES011 (Paquete 14: proveedor 6)
-(31, 6, 'Agencia Local', 95.00, 'Tour montaña Palcoyo'),
-
--- RES012 (Paquete 15: proveedor 6)
-(32, 6, 'Agencia Local', 90.00, 'Tour Valle Rojo'),
-
--- RES013 (Paquete 9: proveedor 7)
-(33, 7, 'Tours', 220.00, 'Guía para Salkantay 5D'),
-(33, 3, 'Transporte', 140.00, 'Movilidad hacia Soraypampa'),
-
--- RES014 (Paquete 6: proveedor 5)
-(34, 5, 'Agencia Local', 70.00, 'Tour Maras y Moray'),
-(34, 3, 'Transporte', 95.00, 'Movilidad privada'),
-
--- RES015 (Paquete 1: proveedor 3)
-(35, 3, 'Transporte', 120.00, 'Tour Machu Picchu'),
-(35, 1, 'Hotel', 160.00, 'Alojamiento Cusco'),
-
--- RES016 (Paquete 12: proveedor 5)
-(36, 5, 'Agencia Local', 55.00, 'Tour Qoricancha'),
-
--- RES017 (Paquete 3: proveedor 5)
-(37, 5, 'Agencia Local', 60.00, 'City Tour para turista'),
-
--- RES018 (Paquete 4: proveedor 6)
-(38, 6, 'Agencia Local', 100.00, 'Montaña 7 colores'),
-(38, 3, 'Transporte', 110.00, 'Movilidad turística'),
-
--- RES019 (Paquete 13: proveedor 1)
-(39, 1, 'Hotel', 210.00, 'Alojamiento 3D/2N'),
-(39, 3, 'Transporte', 140.00, 'Tren a Machu Picchu'),
-
--- RES020 (Paquete 10: proveedor 5)
-(40, 5, 'Agencia Local', 60.00, 'Tour Valle Sur'),
-(40, 3, 'Transporte', 80.00, 'Movilidad para Tipón');
+INSERT INTO reserva_proveedores (reserva_id, proveedor_id, tipo_servicio, costo, notas)
+VALUES
+(1, 2, 'Transporte', 200.00, 'Tren Vistadome'),
+(1, 6, 'Transporte', 50.00, 'Bus Consettur'),
+(2, 8, 'Alimentacion', 40.00, 'Almuerzo Buffet'),
+(3, 4, 'Transporte', 60.00, 'Transporte Privado'),
+(5, 5, 'Entradas', 140.00, 'Boleto Turistico General'),
+(6, 9, 'Entradas', 200.00, 'Permiso Camino Inca'),
+(7, 10, 'Hotel', 500.00, 'Hotel Aranwa 2 noches'),
+(7, 2, 'Transporte', 300.00, 'Tren Hiram Bingham'),
+(8, 4, 'Alimentacion', 30.00, 'Box Lunch'),
+(10, 4, 'Transporte', 80.00, 'Van H1'),
+(11, 1, 'Hotel', 600.00, 'Hotel Monasterio 2 noches'),
+(11, 3, 'Transporte', 150.00, 'Inca Rail 360'),
+(12, 4, 'Equipo', 100.00, 'Alquiler Carpa y Bolsa'),
+(13, 4, 'Transporte', 50.00, 'Bus Turistico'),
+(15, 4, 'Guia', 80.00, 'Guia Privado'),
+(16, 6, 'Transporte', 24.00, 'Bus Subida'),
+(17, 7, 'Hotel', 180.00, 'Casa Andina Standard'),
+(18, 4, 'Transporte', 40.00, 'Transporte Compartido'),
+(20, 5, 'Entradas', 70.00, 'Boleto Turistico Parcial'),
+(20, 4, 'Guia', 60.00, 'Guia Español');
