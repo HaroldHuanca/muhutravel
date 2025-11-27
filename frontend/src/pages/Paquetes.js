@@ -5,7 +5,10 @@ import Footer from '../components/Footer';
 import SearchBar from '../components/SearchBar';
 import Table from '../components/Table';
 import { paquetesService } from '../services/api';
-import { Plus, Eye } from 'lucide-react';
+// 1. IMPORTAR LO NUEVO (Iconos y librería PDF)
+import { Plus, Eye, Printer, X } from 'lucide-react';
+import { PDFViewer } from '@react-pdf/renderer';
+import ReporteGenericoPDF from '../components/ReporteGenericoPDF';
 import './ListPage.css';
 
 function Paquetes({ user, onLogout }) {
@@ -13,6 +16,9 @@ function Paquetes({ user, onLogout }) {
   const [paquetes, setPaquetes] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // 2. ESTADO PARA MOSTRAR/OCULTAR PDF
+  const [mostrarPDF, setMostrarPDF] = useState(false);
 
   useEffect(() => {
     fetchPaquetes();
@@ -58,6 +64,18 @@ function Paquetes({ user, onLogout }) {
           <div className="page-header">
             <h1>Paquetes Turísticos</h1>
             <div style={{ display: 'flex', gap: '10px' }}>
+              
+              {/* 3. BOTÓN DE IMPRIMIR */}
+              <button
+                className="btn-primary"
+                onClick={() => setMostrarPDF(!mostrarPDF)}
+                style={{ backgroundColor: '#6c757d', minWidth: '140px' }}
+                title={mostrarPDF ? "Volver a la tabla" : "Generar reporte PDF"}
+              >
+                {mostrarPDF ? <X size={20} /> : <Printer size={20} />}
+                {mostrarPDF ? ' Cerrar PDF' : ' Imprimir'}
+              </button>
+
               <button
                 className="btn-primary"
                 onClick={() => navigate('/inactivos/paquetes')}
@@ -66,6 +84,7 @@ function Paquetes({ user, onLogout }) {
                 <Eye size={20} />
                 Ver Inactivos
               </button>
+              
               <button
                 className="btn-primary"
                 onClick={() => navigate('/paquetes/new')}
@@ -76,19 +95,35 @@ function Paquetes({ user, onLogout }) {
             </div>
           </div>
 
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar por nombre o destino..."
-          />
+          {/* 4. LÓGICA DE VISUALIZACIÓN */}
+          {mostrarPDF ? (
+            <div style={{ height: '70vh', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
+                <PDFViewer width="100%" height="100%">
+                    <ReporteGenericoPDF 
+                        title="Reporte de Paquetes Turísticos" 
+                        columns={columns} 
+                        data={paquetes} 
+                    />
+                </PDFViewer>
+            </div>
+          ) : (
+            <>
+              <SearchBar
+                value={search}
+                onChange={setSearch}
+                placeholder="Buscar por nombre o destino..."
+              />
 
-          <Table
-            columns={columns}
-            data={paquetes}
-            onEdit={(id) => navigate(`/paquetes/edit/${id}`)}
-            onDelete={handleDelete}
-            loading={loading}
-          />
+              <Table
+                columns={columns}
+                data={paquetes}
+                onEdit={(id) => navigate(`/paquetes/edit/${id}`)}
+                onDelete={handleDelete}
+                loading={loading}
+              />
+            </>
+          )}
+
         </div>
       </div>
       <Footer />
