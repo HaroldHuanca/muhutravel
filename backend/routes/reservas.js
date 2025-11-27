@@ -30,9 +30,110 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
+// ============ RUTAS CON /proveedores (MÁS ESPECÍFICAS) ============
+
+// Obtener proveedores de una reserva
+router.get('/:id/proveedores', verifyToken, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    console.log('Obteniendo proveedores para reserva ID:', id);
+    
+    const result = await pool.query(
+      `SELECT rp.id, rp.reserva_id, rp.proveedor_id, rp.tipo_servicio, rp.costo, rp.notas, rp.creado_en,
+              pr.nombre as proveedor_nombre, pr.tipo as proveedor_tipo, pr.email, pr.telefono
+       FROM reserva_proveedores rp
+       LEFT JOIN proveedores pr ON rp.proveedor_id = pr.id
+       WHERE rp.reserva_id = $1
+       ORDER BY rp.creado_en DESC`,
+      [id]
+    );
+    console.log('Proveedores encontrados:', result.rows.length);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al obtener proveedores:', err);
+    res.status(500).json({ error: 'Error al obtener proveedores de la reserva', details: err.message });
+  }
+});
+
+// Agregar proveedor a reserva
+router.post('/:id/proveedores', verifyToken, async (req, res) => {
+  try {
+    const { proveedor_id, tipo_servicio, costo, notas } = req.body;
+    const reserva_id = parseInt(req.params.id);
+
+    if (!proveedor_id) {
+      return res.status(400).json({ error: 'proveedor_id es requerido' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO reserva_proveedores (reserva_id, proveedor_id, tipo_servicio, costo, notas)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [reserva_id, proveedor_id, tipo_servicio, costo, notas]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    if (err.code === '23505') {
+      return res.status(400).json({ error: 'Este proveedor ya está asignado a esta reserva' });
+    }
+    res.status(500).json({ error: 'Error al agregar proveedor a la reserva' });
+  }
+});
+
+// Actualizar proveedor en reserva
+router.put('/:id/proveedores/:rp_id', verifyToken, async (req, res) => {
+  try {
+    const { tipo_servicio, costo, notas } = req.body;
+    const result = await pool.query(
+      `UPDATE reserva_proveedores 
+       SET tipo_servicio = $1, costo = $2, notas = $3
+       WHERE id = $4 AND reserva_id = $5
+       RETURNING *`,
+      [tipo_servicio, costo, notas, req.params.rp_id, req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Relación reserva-proveedor no encontrada' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar proveedor de la reserva' });
+  }
+});
+
+// Eliminar proveedor de reserva
+router.delete('/:id/proveedores/:rp_id', verifyToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `DELETE FROM reserva_proveedores 
+       WHERE id = $1 AND reserva_id = $2
+       RETURNING id`,
+      [req.params.rp_id, req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Relación reserva-proveedor no encontrada' });
+    }
+
+    res.json({ message: 'Proveedor removido de la reserva' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar proveedor de la reserva' });
+  }
+});
+
+// ============ RUTAS SIN /proveedores (MENOS ESPECÍFICAS) ============
+
 // Obtener reserva por ID
 router.get('/:id', verifyToken, async (req, res) => {
   try {
+    const id = parseInt(req.params.id);
+    console.log('Buscando reserva con ID:', id);
+    
     const result = await pool.query(
       `SELECT 
         r.id, r.numero_reserva, r.cliente_id, r.paquete_id, r.empleado_id,
@@ -45,15 +146,18 @@ router.get('/:id', verifyToken, async (req, res) => {
       LEFT JOIN paquetes p ON r.paquete_id = p.id
       LEFT JOIN empleados e ON r.empleado_id = e.id
       WHERE r.id = $1`,
-      [req.params.id]
+      [id]
     );
+    
+    console.log('Resultado de la consulta:', result.rows);
+    
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Reserva no encontrada' });
+      return res.status(404).json({ error: 'Reserva no encontrada', id: id });
     }
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al obtener reserva' });
+    console.error('Error al obtener reserva:', err);
+    res.status(500).json({ error: 'Error al obtener reserva', details: err.message });
   }
 });
 

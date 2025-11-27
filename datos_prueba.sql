@@ -113,3 +113,76 @@ VALUES
 ('RES018', 30, 4, 4, 2, 240.00, 'confirmada', ''),
 ('RES019', 7, 13, 9, 2, 800.00, 'confirmada', ''),
 ('RES020', 22, 10, 8, 1, 90.00, 'pendiente', '');
+
+INSERT INTO reserva_proveedores (reserva_id, proveedor_id, tipo_servicio, costo, notas) VALUES
+-- RES001 (Paquete 1: proveedor 3)
+(21, 3, 'Transporte', 120.00, 'Tren a Machu Picchu'),
+(21, 1, 'Hotel', 180.00, 'Pernocte en Cusco'),
+
+-- RES002 (Paquete 2: proveedor 5)
+(22, 5, 'Agencia Local', 80.00, 'Tour en Valle Sagrado'),
+
+-- RES003 (Paquete 1: proveedor 3)
+(23, 3, 'Transporte', 120.00, 'Turista de USA'),
+(23, 2, 'Hotel', 200.00, 'Alojamiento estándar'),
+
+-- RES004 (Paquete 4: proveedor 6)
+(24, 6, 'Agencia Local', 100.00, 'Guía local'),
+(24, 3, 'Transporte', 110.00, 'Movilidad'),
+
+-- RES005 (Paquete 5: proveedor 6)
+(25, 6, 'Agencia Local', 90.00, 'Operador en Soraypampa'),
+
+-- RES006 (Paquete 3: proveedor 5)
+(26, 5, 'Agencia Local', 60.00, 'City Tour Cusco'),
+
+-- RES007 (Paquete 7: proveedor 7)
+(27, 7, 'Tours', 250.00, 'Ruta de aventura Inca Jungle'),
+(27, 3, 'Transporte', 150.00, 'Movilidad hacia Santa Teresa'),
+
+-- RES008 (Paquete 1: proveedor 3)
+(28, 3, 'Transporte', 120.00, 'Cancelado luego'),
+
+-- RES009 (Paquete 11: proveedor 10)
+(29, 10, 'Hotel', 180.00, 'Alojamiento en Aguas Calientes'),
+(29, 3, 'Transporte', 130.00, 'Tren PeruRail'),
+
+-- RES010 (Paquete 8: proveedor 7)
+(30, 7, 'Tours', 180.00, 'Trekking 2D/1N'),
+(30, 3, 'Transporte', 120.00, 'Tren base'),
+
+-- RES011 (Paquete 14: proveedor 6)
+(31, 6, 'Agencia Local', 95.00, 'Tour montaña Palcoyo'),
+
+-- RES012 (Paquete 15: proveedor 6)
+(32, 6, 'Agencia Local', 90.00, 'Tour Valle Rojo'),
+
+-- RES013 (Paquete 9: proveedor 7)
+(33, 7, 'Tours', 220.00, 'Guía para Salkantay 5D'),
+(33, 3, 'Transporte', 140.00, 'Movilidad hacia Soraypampa'),
+
+-- RES014 (Paquete 6: proveedor 5)
+(34, 5, 'Agencia Local', 70.00, 'Tour Maras y Moray'),
+(34, 3, 'Transporte', 95.00, 'Movilidad privada'),
+
+-- RES015 (Paquete 1: proveedor 3)
+(35, 3, 'Transporte', 120.00, 'Tour Machu Picchu'),
+(35, 1, 'Hotel', 160.00, 'Alojamiento Cusco'),
+
+-- RES016 (Paquete 12: proveedor 5)
+(36, 5, 'Agencia Local', 55.00, 'Tour Qoricancha'),
+
+-- RES017 (Paquete 3: proveedor 5)
+(37, 5, 'Agencia Local', 60.00, 'City Tour para turista'),
+
+-- RES018 (Paquete 4: proveedor 6)
+(38, 6, 'Agencia Local', 100.00, 'Montaña 7 colores'),
+(38, 3, 'Transporte', 110.00, 'Movilidad turística'),
+
+-- RES019 (Paquete 13: proveedor 1)
+(39, 1, 'Hotel', 210.00, 'Alojamiento 3D/2N'),
+(39, 3, 'Transporte', 140.00, 'Tren a Machu Picchu'),
+
+-- RES020 (Paquete 10: proveedor 5)
+(40, 5, 'Agencia Local', 60.00, 'Tour Valle Sur'),
+(40, 3, 'Transporte', 80.00, 'Movilidad para Tipón');

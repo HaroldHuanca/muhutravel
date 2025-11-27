@@ -5,7 +5,7 @@ import Footer from '../components/Footer';
 import SearchBar from '../components/SearchBar';
 import Table from '../components/Table';
 import { reservasService } from '../services/api';
-import { Plus } from 'lucide-react';
+import { Plus, Link2 } from 'lucide-react';
 import './ListPage.css';
 
 function Reservas({ user, onLogout }) {
@@ -22,6 +22,8 @@ function Reservas({ user, onLogout }) {
     setLoading(true);
     try {
       const response = await reservasService.getAll(search);
+      console.log('Reservas obtenidas:', response.data);
+      console.log('Primeras 3 reservas con IDs:', response.data.slice(0, 3).map(r => ({ id: r.id, numero_reserva: r.numero_reserva })));
       setReservas(response.data);
     } catch (err) {
       console.error('Error al obtener reservas:', err);
@@ -93,13 +95,60 @@ function Reservas({ user, onLogout }) {
             placeholder="Buscar por número de reserva, cliente o paquete..."
           />
 
-          <Table
-            columns={columns}
-            data={reservas}
-            onEdit={(id) => navigate(`/reservas/edit/${id}`)}
-            onDelete={handleDelete}
-            loading={loading}
-          />
+          {loading ? (
+            <div className="table-loading">Cargando datos...</div>
+          ) : reservas.length === 0 ? (
+            <div className="table-empty">No hay reservas disponibles</div>
+          ) : (
+            <div className="table-wrapper">
+              <table className="table">
+                <thead>
+                  <tr>
+                    {columns.map((col) => (
+                      <th key={col.key}>{col.label}</th>
+                    ))}
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reservas.map((row, idx) => (
+                    <tr key={row.id || idx}>
+                      {columns.map((col) => (
+                        <td key={col.key}>
+                          {col.render ? col.render(row[col.key], row) : row[col.key]}
+                        </td>
+                      ))}
+                      <td className="table-actions">
+                        <button
+                          className="action-btn edit-btn"
+                          onClick={() => navigate(`/reservas/edit/${row.id}`)}
+                          title="Editar"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className="action-btn"
+                          style={{ backgroundColor: '#48bb78', color: 'white' }}
+                          onClick={() => navigate(`/reservas/${row.id}/proveedores`)}
+                          title="Asignar proveedores"
+                        >
+                          <Link2 size={18} />
+                          Proveedores
+                        </button>
+                        <button
+                          className="action-btn delete-btn"
+                          onClick={() => handleDelete(row.id)}
+                          title="Eliminar"
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
       <Footer />

@@ -7,7 +7,7 @@ import SearchBar from '../components/SearchBar';
 import api from '../services/api';
 import './ListPage.css';
 
-function Inactivos() {
+function Inactivos({ user, onLogout }) {
   const { tipo } = useParams();
   const navigate = useNavigate();
   const [inactivos, setInactivos] = useState([]);
@@ -121,7 +121,7 @@ function Inactivos() {
   if (!config) {
     return (
       <div>
-        <Header />
+        <Header user={user} onLogout={onLogout} />
         <div className="list-container">
           <h1>Tipo de inactivos no válido</h1>
         </div>
@@ -131,7 +131,7 @@ function Inactivos() {
 
   return (
     <div>
-      <Header />
+      <Header user={user} onLogout={onLogout} />
       <div className="list-container">
         <div className="list-header">
           <h1>{config.titulo}</h1>

@@ -81,6 +81,22 @@ CREATE TABLE reservas (
     comentario TEXT
 );
 
+-- TABLA INTERMEDIA: Relación muchos a muchos entre reservas y proveedores
+CREATE TABLE reserva_proveedores (
+    id SERIAL PRIMARY KEY,
+    reserva_id INTEGER NOT NULL REFERENCES reservas(id) ON DELETE CASCADE,
+    proveedor_id INTEGER NOT NULL REFERENCES proveedores(id) ON DELETE CASCADE,
+    tipo_servicio VARCHAR(100),   -- hotel, transporte, tours, etc.
+    costo DECIMAL(10,2),          -- costo facturado por el proveedor
+    notas TEXT,
+    creado_en TIMESTAMP DEFAULT NOW(),
+
+    -- Evitar duplicados del mismo proveedor en la misma reserva
+    UNIQUE (reserva_id, proveedor_id)
+);
+
+
+
 -- INDICES (opcionales)
 CREATE INDEX idx_reservas_cliente ON reservas(cliente_id);
 CREATE INDEX idx_reservas_paquete ON reservas(paquete_id);

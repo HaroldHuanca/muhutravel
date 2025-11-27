@@ -66,6 +66,10 @@ export const reservasService = {
   create: (data) => api.post('/reservas', data),
   update: (id, data) => api.put(`/reservas/${id}`, data),
   delete: (id) => api.delete(`/reservas/${id}`),
+  getProveedores: (id) => api.get(`/reservas/${id}/proveedores`),
+  addProveedor: (id, data) => api.post(`/reservas/${id}/proveedores`, data),
+  updateProveedor: (id, rpId, data) => api.put(`/reservas/${id}/proveedores/${rpId}`, data),
+  deleteProveedor: (id, rpId) => api.delete(`/reservas/${id}/proveedores/${rpId}`),
 };
 
 export default api;
