@@ -17,6 +17,7 @@ import ReservasEdit from './pages/ReservasEdit';
 import Inactivos from './pages/Inactivos';
 import Comunicacion from './pages/Comunicacion';
 import ReservaProveedores from './pages/PaqueteProveedores';
+import Reportes from './pages/Reportes';
 import './App.css';
 
 function App() {
@@ -41,11 +42,11 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
-        
+
         {token ? (
           <>
             <Route path="/" element={<Dashboard user={user} onLogout={handleLogout} />} />
-            
+
             {user?.rol === 'admin' && (
               <>
                 <Route path="/usuarios" element={<Usuarios user={user} onLogout={handleLogout} />} />
@@ -53,30 +54,31 @@ function App() {
                 <Route path="/usuarios/new" element={<UsuariosEdit user={user} onLogout={handleLogout} />} />
               </>
             )}
-            
+
             <Route path="/clientes" element={<Clientes user={user} onLogout={handleLogout} />} />
             <Route path="/clientes/edit/:id" element={<ClientesEdit user={user} onLogout={handleLogout} />} />
             <Route path="/clientes/new" element={<ClientesEdit user={user} onLogout={handleLogout} />} />
-            
+
             <Route path="/empleados" element={<Empleados user={user} onLogout={handleLogout} />} />
             <Route path="/empleados/edit/:id" element={<EmpleadosEdit user={user} onLogout={handleLogout} />} />
             <Route path="/empleados/new" element={<EmpleadosEdit user={user} onLogout={handleLogout} />} />
-            
+
             <Route path="/proveedores" element={<Proveedores user={user} onLogout={handleLogout} />} />
             <Route path="/proveedores/edit/:id" element={<ProveedoresEdit user={user} onLogout={handleLogout} />} />
             <Route path="/proveedores/new" element={<ProveedoresEdit user={user} onLogout={handleLogout} />} />
-            
+
             <Route path="/paquetes" element={<Paquetes user={user} onLogout={handleLogout} />} />
             <Route path="/paquetes/edit/:id" element={<PaquetesEdit user={user} onLogout={handleLogout} />} />
             <Route path="/paquetes/new" element={<PaquetesEdit user={user} onLogout={handleLogout} />} />
-            
+
             <Route path="/reservas" element={<Reservas user={user} onLogout={handleLogout} />} />
             <Route path="/reservas/edit/:id" element={<ReservasEdit user={user} onLogout={handleLogout} />} />
             <Route path="/reservas/new" element={<ReservasEdit user={user} onLogout={handleLogout} />} />
             <Route path="/reservas/:id/proveedores" element={<ReservaProveedores user={user} onLogout={handleLogout} />} />
-            
+
             <Route path="/comunicacion" element={<Comunicacion user={user} onLogout={handleLogout} />} />
-            
+            <Route path="/reportes" element={<Reportes user={user} onLogout={handleLogout} />} />
+
             <Route path="/inactivos/:tipo" element={<Inactivos user={user} onLogout={handleLogout} />} />
           </>
         ) : (

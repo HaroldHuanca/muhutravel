@@ -48,6 +48,9 @@ function Header({ user, onLogout }) {
             <MessageCircle size={18} style={{ display: 'inline', marginRight: '5px' }} />
             Comunicación
           </Link>
+          <Link to="/reportes" className="nav-link" onClick={() => setMenuOpen(false)}>
+            Reportes
+          </Link>
           {user?.rol === 'admin' && (
             <Link to="/usuarios" className="nav-link" onClick={() => setMenuOpen(false)}>
               Usuarios
@@ -65,7 +68,7 @@ function Header({ user, onLogout }) {
           </button>
         </div>
       </div>
-    </header>
+    </header >
   );
 }
 

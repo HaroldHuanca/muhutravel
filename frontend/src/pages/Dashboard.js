@@ -42,6 +42,13 @@ function Dashboard({ user, onLogout }) {
       link: '/reservas',
       color: '#9f7aea',
     },
+    {
+      title: 'Reportes',
+      description: 'Ver reportes de ventas y clientes',
+      icon: Calendar, // Using Calendar as a placeholder, ideally should import BarChart or similar if available
+      link: '/reportes',
+      color: '#e53e3e',
+    },
   ];
 
   if (user?.rol === 'admin') {
