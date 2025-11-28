@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { RotateCcw } from 'lucide-react';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import SearchBar from '../components/SearchBar';
 import api from '../services/api';
 import './ListPage.css';
@@ -120,8 +118,7 @@ function Inactivos({ user, onLogout }) {
 
   if (!config) {
     return (
-      <div>
-        <Header user={user} onLogout={onLogout} />
+      <div className="container">
         <div className="list-container">
           <h1>Tipo de inactivos no válido</h1>
         </div>
@@ -130,12 +127,11 @@ function Inactivos({ user, onLogout }) {
   }
 
   return (
-    <div>
-      <Header user={user} onLogout={onLogout} />
+    <div className="container">
       <div className="list-container">
         <div className="list-header">
           <h1>{config.titulo}</h1>
-          <button 
+          <button
             className="btn-volver"
             onClick={() => navigate(`/${tipo}`)}
           >
@@ -188,7 +184,6 @@ function Inactivos({ user, onLogout }) {
           </div>
         )}
       </div>
-      <Footer />
     </div>
   );
 }

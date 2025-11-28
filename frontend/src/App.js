@@ -18,6 +18,7 @@ import Inactivos from './pages/Inactivos';
 import Comunicacion from './pages/Comunicacion';
 import ReservaProveedores from './pages/PaqueteProveedores';
 import Reportes from './pages/Reportes';
+import Layout from './components/Layout';
 import './App.css';
 
 function App() {
@@ -44,7 +45,7 @@ function App() {
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
 
         {token ? (
-          <>
+          <Route element={<Layout user={user} onLogout={handleLogout} />}>
             <Route path="/" element={<Dashboard user={user} onLogout={handleLogout} />} />
 
             {user?.rol === 'admin' && (
@@ -80,7 +81,7 @@ function App() {
             <Route path="/reportes" element={<Reportes user={user} onLogout={handleLogout} />} />
 
             <Route path="/inactivos/:tipo" element={<Inactivos user={user} onLogout={handleLogout} />} />
-          </>
+          </Route>
         ) : (
           <Route path="*" element={<Navigate to="/login" />} />
         )}

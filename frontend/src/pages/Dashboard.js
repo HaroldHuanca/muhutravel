@@ -1,7 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import { Users, Briefcase, Package, Calendar, Building2, UserCheck } from 'lucide-react';
 import './Dashboard.css';
 
@@ -62,32 +60,26 @@ function Dashboard({ user, onLogout }) {
   }
 
   return (
-    <div className="page-wrapper">
-      <Header user={user} onLogout={onLogout} />
-      <div className="page-content">
-        <div className="container">
-          <div className="dashboard-header">
-            <h1>Bienvenido, {user?.username}!</h1>
-            <p>Selecciona un módulo para comenzar</p>
-          </div>
-
-          <div className="modules-grid">
-            {modules.map((module) => {
-              const Icon = module.icon;
-              return (
-                <Link key={module.link} to={module.link} className="module-card">
-                  <div className="module-icon" style={{ backgroundColor: module.color }}>
-                    <Icon size={32} color="white" />
-                  </div>
-                  <h3>{module.title}</h3>
-                  <p>{module.description}</p>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+    <div className="dashboard-container">
+      <div className="dashboard-header">
+        <h1>Bienvenido, {user?.username}!</h1>
+        <p>Selecciona un módulo para comenzar</p>
       </div>
-      <Footer />
+
+      <div className="modules-grid">
+        {modules.map((module) => {
+          const Icon = module.icon;
+          return (
+            <Link key={module.link} to={module.link} className="module-card">
+              <div className="module-icon" style={{ backgroundColor: module.color }}>
+                <Icon size={32} color="white" />
+              </div>
+              <h3>{module.title}</h3>
+              <p>{module.description}</p>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

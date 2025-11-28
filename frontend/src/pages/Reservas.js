@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import SearchBar from '../components/SearchBar';
 import { reservasService } from '../services/api';
 // 1. IMPORTAR LO NUEVO (Printer, X y las librerías de PDF)
@@ -75,116 +73,110 @@ function Reservas({ user, onLogout }) {
   ];
 
   return (
-    <div className="page-wrapper">
-      <Header user={user} onLogout={onLogout} />
-      <div className="page-content">
-        <div className="container">
-          <div className="page-header">
-            <h1>Reservas</h1>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              
-              {/* 3. BOTÓN DE IMPRIMIR */}
-              <button
-                className="btn-primary"
-                onClick={() => setMostrarPDF(!mostrarPDF)}
-                style={{ backgroundColor: '#6c757d', minWidth: '140px' }}
-                title={mostrarPDF ? "Volver a la tabla" : "Generar reporte PDF"}
-              >
-                {mostrarPDF ? <X size={20} /> : <Printer size={20} />}
-                {mostrarPDF ? ' Cerrar PDF' : ' Imprimir'}
-              </button>
+    <div className="container">
+      <div className="page-header">
+        <h1>Reservas</h1>
+        <div style={{ display: 'flex', gap: '10px' }}>
 
-              <button
-                className="btn-primary"
-                onClick={() => navigate('/reservas/new')}
-              >
-                <Plus size={20} />
-                Nueva Reserva
-              </button>
-            </div>
-          </div>
+          {/* 3. BOTÓN DE IMPRIMIR */}
+          <button
+            className="btn-primary"
+            onClick={() => setMostrarPDF(!mostrarPDF)}
+            style={{ backgroundColor: '#6c757d', minWidth: '140px' }}
+            title={mostrarPDF ? "Volver a la tabla" : "Generar reporte PDF"}
+          >
+            {mostrarPDF ? <X size={20} /> : <Printer size={20} />}
+            {mostrarPDF ? ' Cerrar PDF' : ' Imprimir'}
+          </button>
 
-          {/* 4. LÓGICA DE VISUALIZACIÓN */}
-          {mostrarPDF ? (
-            // A) VISTA PDF
-            <div style={{ height: '70vh', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
-                <PDFViewer width="100%" height="100%">
-                    <ReporteGenericoPDF 
-                        title="Reporte de Reservas" 
-                        columns={columns} 
-                        data={reservas} 
-                    />
-                </PDFViewer>
-            </div>
-          ) : (
-            // B) VISTA NORMAL (Buscador y Tabla Manual)
-            <>
-              <SearchBar
-                value={search}
-                onChange={setSearch}
-                placeholder="Buscar por número de reserva, cliente o paquete..."
-              />
-
-              {loading ? (
-                <div className="table-loading">Cargando datos...</div>
-              ) : reservas.length === 0 ? (
-                <div className="table-empty">No hay reservas disponibles</div>
-              ) : (
-                <div className="table-wrapper">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        {columns.map((col) => (
-                          <th key={col.key}>{col.label}</th>
-                        ))}
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {reservas.map((row, idx) => (
-                        <tr key={row.id || idx}>
-                          {columns.map((col) => (
-                            <td key={col.key}>
-                              {col.render ? col.render(row[col.key], row) : row[col.key]}
-                            </td>
-                          ))}
-                          <td className="table-actions">
-                            <button
-                              className="action-btn edit-btn"
-                              onClick={() => navigate(`/reservas/edit/${row.id}`)}
-                              title="Editar"
-                            >
-                              Editar
-                            </button>
-                            <button
-                              className="action-btn"
-                              style={{ backgroundColor: '#48bb78', color: 'white' }}
-                              onClick={() => navigate(`/reservas/${row.id}/proveedores`)}
-                              title="Asignar proveedores"
-                            >
-                              <Link2 size={18} />
-                              Proveedores
-                            </button>
-                            <button
-                              className="action-btn delete-btn"
-                              onClick={() => handleDelete(row.id)}
-                              title="Eliminar"
-                            >
-                              Eliminar
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
-          )}
-
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/reservas/new')}
+          >
+            <Plus size={20} />
+            Nueva Reserva
+          </button>
         </div>
       </div>
-      <Footer />
+
+      {/* 4. LÓGICA DE VISUALIZACIÓN */}
+      {mostrarPDF ? (
+        // A) VISTA PDF
+        <div style={{ height: '70vh', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
+          <PDFViewer width="100%" height="100%">
+            <ReporteGenericoPDF
+              title="Reporte de Reservas"
+              columns={columns}
+              data={reservas}
+            />
+          </PDFViewer>
+        </div>
+      ) : (
+        // B) VISTA NORMAL (Buscador y Tabla Manual)
+        <>
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar por número de reserva, cliente o paquete..."
+          />
+
+          {loading ? (
+            <div className="table-loading">Cargando datos...</div>
+          ) : reservas.length === 0 ? (
+            <div className="table-empty">No hay reservas disponibles</div>
+          ) : (
+            <div className="table-wrapper">
+              <table className="table">
+                <thead>
+                  <tr>
+                    {columns.map((col) => (
+                      <th key={col.key}>{col.label}</th>
+                    ))}
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reservas.map((row, idx) => (
+                    <tr key={row.id || idx}>
+                      {columns.map((col) => (
+                        <td key={col.key}>
+                          {col.render ? col.render(row[col.key], row) : row[col.key]}
+                        </td>
+                      ))}
+                      <td className="table-actions">
+                        <button
+                          className="action-btn edit-btn"
+                          onClick={() => navigate(`/reservas/edit/${row.id}`)}
+                          title="Editar"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className="action-btn"
+                          style={{ backgroundColor: '#48bb78', color: 'white' }}
+                          onClick={() => navigate(`/reservas/${row.id}/proveedores`)}
+                          title="Asignar proveedores"
+                        >
+                          <Link2 size={18} />
+                          Proveedores
+                        </button>
+                        <button
+                          className="action-btn delete-btn"
+                          onClick={() => handleDelete(row.id)}
+                          title="Eliminar"
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+
     </div>
   );
 }

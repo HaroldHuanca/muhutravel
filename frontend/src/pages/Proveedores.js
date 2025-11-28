@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import SearchBar from '../components/SearchBar';
 import Table from '../components/Table';
 import { proveedoresService } from '../services/api';
@@ -16,7 +14,7 @@ function Proveedores({ user, onLogout }) {
   const [proveedores, setProveedores] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   // 2. ESTADO PARA MOSTRAR/OCULTAR PDF
   const [mostrarPDF, setMostrarPDF] = useState(false);
 
@@ -56,76 +54,70 @@ function Proveedores({ user, onLogout }) {
   ];
 
   return (
-    <div className="page-wrapper">
-      <Header user={user} onLogout={onLogout} />
-      <div className="page-content">
-        <div className="container">
-          <div className="page-header">
-            <h1>Proveedores</h1>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              
-              {/* 3. BOTÓN DE IMPRIMIR */}
-              <button
-                className="btn-primary"
-                onClick={() => setMostrarPDF(!mostrarPDF)}
-                style={{ backgroundColor: '#6c757d', minWidth: '140px' }}
-                title={mostrarPDF ? "Volver a la tabla" : "Generar reporte PDF"}
-              >
-                {mostrarPDF ? <X size={20} /> : <Printer size={20} />}
-                {mostrarPDF ? ' Cerrar PDF' : ' Imprimir'}
-              </button>
+    <div className="container">
+      <div className="page-header">
+        <h1>Proveedores</h1>
+        <div style={{ display: 'flex', gap: '10px' }}>
 
-              <button
-                className="btn-primary"
-                onClick={() => navigate('/inactivos/proveedores')}
-                title="Ver proveedores inactivos"
-              >
-                <Eye size={20} />
-                Ver Inactivos
-              </button>
-              
-              <button
-                className="btn-primary"
-                onClick={() => navigate('/proveedores/new')}
-              >
-                <Plus size={20} />
-                Nuevo Proveedor
-              </button>
-            </div>
-          </div>
+          {/* 3. BOTÓN DE IMPRIMIR */}
+          <button
+            className="btn-primary"
+            onClick={() => setMostrarPDF(!mostrarPDF)}
+            style={{ backgroundColor: '#6c757d', minWidth: '140px' }}
+            title={mostrarPDF ? "Volver a la tabla" : "Generar reporte PDF"}
+          >
+            {mostrarPDF ? <X size={20} /> : <Printer size={20} />}
+            {mostrarPDF ? ' Cerrar PDF' : ' Imprimir'}
+          </button>
 
-          {/* 4. LÓGICA DE VISUALIZACIÓN */}
-          {mostrarPDF ? (
-            <div style={{ height: '70vh', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
-                <PDFViewer width="100%" height="100%">
-                    <ReporteGenericoPDF 
-                        title="Reporte de Proveedores" 
-                        columns={columns} 
-                        data={proveedores} 
-                    />
-                </PDFViewer>
-            </div>
-          ) : (
-            <>
-              <SearchBar
-                value={search}
-                onChange={setSearch}
-                placeholder="Buscar por nombre, tipo o ciudad..."
-              />
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/inactivos/proveedores')}
+            title="Ver proveedores inactivos"
+          >
+            <Eye size={20} />
+            Ver Inactivos
+          </button>
 
-              <Table
-                columns={columns}
-                data={proveedores}
-                onEdit={(id) => navigate(`/proveedores/edit/${id}`)}
-                onDelete={handleDelete}
-                loading={loading}
-              />
-            </>
-          )}
-
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/proveedores/new')}
+          >
+            <Plus size={20} />
+            Nuevo Proveedor
+          </button>
         </div>
       </div>
-      <Footer />
+
+      {/* 4. LÓGICA DE VISUALIZACIÓN */}
+      {mostrarPDF ? (
+        <div style={{ height: '70vh', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
+          <PDFViewer width="100%" height="100%">
+            <ReporteGenericoPDF
+              title="Reporte de Proveedores"
+              columns={columns}
+              data={proveedores}
+            />
+          </PDFViewer>
+        </div>
+      ) : (
+        <>
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar por nombre, tipo o ciudad..."
+          />
+
+          <Table
+            columns={columns}
+            data={proveedores}
+            onEdit={(id) => navigate(`/proveedores/edit/${id}`)}
+            onDelete={handleDelete}
+            loading={loading}
+          />
+        </>
+      )}
+
     </div>
   );
 }

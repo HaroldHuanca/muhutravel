@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import SearchBar from '../components/SearchBar';
 import Table from '../components/Table';
 import { usuariosService } from '../services/api';
@@ -56,47 +54,41 @@ function Usuarios({ user, onLogout }) {
   ];
 
   return (
-    <div className="page-wrapper">
-      <Header user={user} onLogout={onLogout} />
-      <div className="page-content">
-        <div className="container">
-          <div className="page-header">
-            <h1>Usuarios del Sistema</h1>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                className="btn-primary"
-                onClick={() => navigate('/inactivos/usuarios')}
-                title="Ver usuarios inactivos"
-              >
-                <Eye size={20} />
-                Ver Inactivos
-              </button>
-              <button
-                className="btn-primary"
-                onClick={() => navigate('/usuarios/new')}
-              >
-                <Plus size={20} />
-                Nuevo Usuario
-              </button>
-            </div>
-          </div>
-
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar por usuario..."
-          />
-
-          <Table
-            columns={columns}
-            data={usuarios}
-            onEdit={(id) => navigate(`/usuarios/edit/${id}`)}
-            onDelete={handleDelete}
-            loading={loading}
-          />
+    <div className="container">
+      <div className="page-header">
+        <h1>Usuarios del Sistema</h1>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/inactivos/usuarios')}
+            title="Ver usuarios inactivos"
+          >
+            <Eye size={20} />
+            Ver Inactivos
+          </button>
+          <button
+            className="btn-primary"
+            onClick={() => navigate('/usuarios/new')}
+          >
+            <Plus size={20} />
+            Nuevo Usuario
+          </button>
         </div>
       </div>
-      <Footer />
+
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Buscar por usuario..."
+      />
+
+      <Table
+        columns={columns}
+        data={usuarios}
+        onEdit={(id) => navigate(`/usuarios/edit/${id}`)}
+        onDelete={handleDelete}
+        loading={loading}
+      />
     </div>
   );
 }

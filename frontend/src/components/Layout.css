@@ -1,0 +1,25 @@
+.layout-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f7fafc;
+}
+
+.main-content {
+    flex: 1;
+    transition: margin-left 0.3s ease;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+.content-wrapper {
+    padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding: 15px;
+    }
+}
