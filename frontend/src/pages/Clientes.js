@@ -72,7 +72,7 @@ function Clientes({ user, onLogout }) {
             {mostrarPDF ? ' Cerrar PDF' : ' Imprimir'}
           </button>
 
-          {user.rol !== 'agent' && (
+          {user.rol !== 'agente' && (
             <button
               className="btn-primary"
               onClick={() => navigate('/inactivos/clientes')}
@@ -118,8 +118,8 @@ function Clientes({ user, onLogout }) {
           <Table
             columns={columns}
             data={clientes}
-            onEdit={user.rol !== 'agent' ? (id) => navigate(`/clientes/edit/${id}`) : null}
-            onDelete={user.rol !== 'agent' ? handleDelete : null}
+            onEdit={user.rol !== 'agente' ? (id) => navigate(`/clientes/edit/${id}`) : null}
+            onDelete={user.rol !== 'agente' ? handleDelete : null}
             loading={loading}
           />
         </>

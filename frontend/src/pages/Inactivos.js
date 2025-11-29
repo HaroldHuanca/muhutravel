@@ -70,7 +70,7 @@ function Inactivos({ user, onLogout }) {
 
   useEffect(() => {
     // Restricción para agentes
-    if (user?.rol === 'agent' && ['clientes', 'proveedores', 'paquetes'].includes(tipo)) {
+    if (user?.rol === 'agente' && ['clientes', 'proveedores', 'paquetes'].includes(tipo)) {
       navigate('/');
       return;
     }

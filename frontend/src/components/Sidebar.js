@@ -30,6 +30,14 @@ const Sidebar = ({ user, onLogout, collapsed, setCollapsed }) => {
         { path: '/reportes', label: 'Reportes', icon: FileText },
     ];
 
+    // Filter out Empleados for agents
+    if (user?.rol === 'agente') {
+        const empleadosIndex = menuItems.findIndex(item => item.path === '/empleados');
+        if (empleadosIndex > -1) {
+            menuItems.splice(empleadosIndex, 1);
+        }
+    }
+
     if (user?.rol === 'admin') {
         menuItems.push({ path: '/usuarios', label: 'Usuarios', icon: Briefcase });
     }

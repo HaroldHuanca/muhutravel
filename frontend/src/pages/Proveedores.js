@@ -70,7 +70,7 @@ function Proveedores({ user, onLogout }) {
             {mostrarPDF ? ' Cerrar PDF' : ' Imprimir'}
           </button>
 
-          {user.rol !== 'agent' && (
+          {user.rol !== 'agente' && (
             <>
               <button
                 className="btn-primary"
@@ -115,8 +115,8 @@ function Proveedores({ user, onLogout }) {
           <Table
             columns={columns}
             data={proveedores}
-            onEdit={user.rol !== 'agent' ? (id) => navigate(`/proveedores/edit/${id}`) : null}
-            onDelete={user.rol !== 'agent' ? handleDelete : null}
+            onEdit={user.rol !== 'agente' ? (id) => navigate(`/proveedores/edit/${id}`) : null}
+            onDelete={user.rol !== 'agente' ? handleDelete : null}
             loading={loading}
           />
         </>
