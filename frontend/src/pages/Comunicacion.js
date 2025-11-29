@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import QRCode from 'qrcode.react';
 import { Send, Phone, MessageCircle, X, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import './Comunicacion.css';
@@ -55,10 +55,7 @@ function Comunicacion({ user, onLogout }) {
   const cargarClientes = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/clientes', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/clientes');
       setClientes(response.data);
       setError('');
     } catch (err) {
@@ -94,19 +91,15 @@ function Comunicacion({ user, onLogout }) {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
 
       // Simular conexión con WhatsApp API
       const nombreCompleto = `${selectedCliente.nombres || ''} ${selectedCliente.apellidos || ''}`.trim();
-      const response = await axios.post(
-        'http://localhost:5000/api/comunicacion/conectar',
+      const response = await api.post(
+        '/comunicacion/conectar',
         {
           clienteId: selectedCliente.id,
           telefono: selectedCliente.telefono,
           nombre: nombreCompleto || selectedCliente.nombre
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
         }
       );
 
@@ -130,12 +123,8 @@ function Comunicacion({ user, onLogout }) {
     if (!selectedCliente) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `http://localhost:5000/api/comunicacion/mensajes/${selectedCliente.id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+      const response = await api.get(
+        `/comunicacion/mensajes/${selectedCliente.id}`
       );
       setMensajes(response.data);
       lastMessageCountRef.current = response.data.length;
@@ -148,12 +137,8 @@ function Comunicacion({ user, onLogout }) {
     if (!selectedCliente) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `http://localhost:5000/api/comunicacion/mensajes/${selectedCliente.id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+      const response = await api.get(
+        `/comunicacion/mensajes/${selectedCliente.id}`
       );
 
       // Solo actualizar si hay nuevos mensajes
@@ -194,18 +179,14 @@ function Comunicacion({ user, onLogout }) {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
 
-      const response = await axios.post(
-        'http://localhost:5000/api/comunicacion/enviar',
+      const response = await api.post(
+        '/comunicacion/enviar',
         {
           clienteId: selectedCliente.id,
           telefono: selectedCliente.telefono,
           mensaje: nuevoMensaje,
           remitente: user.username
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
         }
       );
 
