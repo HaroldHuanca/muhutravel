@@ -71,22 +71,26 @@ function Paquetes({ user, onLogout }) {
             {mostrarPDF ? ' Cerrar PDF' : ' Imprimir'}
           </button>
 
-          <button
-            className="btn-primary"
-            onClick={() => navigate('/inactivos/paquetes')}
-            title="Ver paquetes inactivos"
-          >
-            <Eye size={20} />
-            Ver Inactivos
-          </button>
+          {user.rol !== 'agente' && (
+            <>
+              <button
+                className="btn-primary"
+                onClick={() => navigate('/inactivos/paquetes')}
+                title="Ver paquetes inactivos"
+              >
+                <Eye size={20} />
+                Ver Inactivos
+              </button>
 
-          <button
-            className="btn-primary"
-            onClick={() => navigate('/paquetes/new')}
-          >
-            <Plus size={20} />
-            Nuevo Paquete
-          </button>
+              <button
+                className="btn-primary"
+                onClick={() => navigate('/paquetes/new')}
+              >
+                <Plus size={20} />
+                Nuevo Paquete
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -112,8 +116,8 @@ function Paquetes({ user, onLogout }) {
           <Table
             columns={columns}
             data={paquetes}
-            onEdit={(id) => navigate(`/paquetes/edit/${id}`)}
-            onDelete={handleDelete}
+            onEdit={user.rol !== 'agente' ? (id) => navigate(`/paquetes/edit/${id}`) : null}
+            onDelete={user.rol !== 'agente' ? handleDelete : null}
             loading={loading}
           />
         </>

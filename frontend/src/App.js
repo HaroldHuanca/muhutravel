@@ -48,6 +48,7 @@ function App() {
           <Route element={<Layout user={user} onLogout={handleLogout} />}>
             <Route path="/" element={<Dashboard user={user} onLogout={handleLogout} />} />
 
+            {/* Admin routes */}
             {user?.rol === 'admin' && (
               <>
                 <Route path="/usuarios" element={<Usuarios user={user} onLogout={handleLogout} />} />
@@ -56,13 +57,18 @@ function App() {
               </>
             )}
 
+            {/* Admin and Manager routes */}
+            {(user?.rol === 'admin' || user?.rol === 'manager') && (
+              <>
+                <Route path="/empleados" element={<Empleados user={user} onLogout={handleLogout} />} />
+                <Route path="/empleados/edit/:id" element={<EmpleadosEdit user={user} onLogout={handleLogout} />} />
+                <Route path="/empleados/new" element={<EmpleadosEdit user={user} onLogout={handleLogout} />} />
+              </>
+            )}
+
             <Route path="/clientes" element={<Clientes user={user} onLogout={handleLogout} />} />
             <Route path="/clientes/edit/:id" element={<ClientesEdit user={user} onLogout={handleLogout} />} />
             <Route path="/clientes/new" element={<ClientesEdit user={user} onLogout={handleLogout} />} />
-
-            <Route path="/empleados" element={<Empleados user={user} onLogout={handleLogout} />} />
-            <Route path="/empleados/edit/:id" element={<EmpleadosEdit user={user} onLogout={handleLogout} />} />
-            <Route path="/empleados/new" element={<EmpleadosEdit user={user} onLogout={handleLogout} />} />
 
             <Route path="/proveedores" element={<Proveedores user={user} onLogout={handleLogout} />} />
             <Route path="/proveedores/edit/:id" element={<ProveedoresEdit user={user} onLogout={handleLogout} />} />

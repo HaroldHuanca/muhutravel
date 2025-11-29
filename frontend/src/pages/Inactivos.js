@@ -69,8 +69,13 @@ function Inactivos({ user, onLogout }) {
   const config = tiposConfig[tipo];
 
   useEffect(() => {
+    // Restricción para agentes
+    if (user?.rol === 'agente' && ['clientes', 'proveedores', 'paquetes'].includes(tipo)) {
+      navigate('/');
+      return;
+    }
     cargarInactivos();
-  }, [tipo]);
+  }, [tipo, user]);
 
   useEffect(() => {
     filtrarInactivos();
