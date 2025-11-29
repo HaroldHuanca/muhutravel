@@ -35,22 +35,26 @@ function Table({ columns, data, onEdit, onDelete, loading = false }) {
                 </td>
               ))}
               <td className="table-actions">
-                <button
-                  className="action-btn edit-btn"
-                  onClick={() => onEdit(row.id)}
-                  title="Editar"
-                >
-                  <Edit2 size={18} />
-                  Editar
-                </button>
-                <button
-                  className="action-btn delete-btn"
-                  onClick={() => onDelete(row.id)}
-                  title="Eliminar"
-                >
-                  <Trash2 size={18} />
-                  Eliminar
-                </button>
+                {onEdit && (
+                  <button
+                    className="action-btn edit-btn"
+                    onClick={() => onEdit(row.id)}
+                    title="Editar"
+                  >
+                    <Edit2 size={18} />
+                    Editar
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    className="action-btn delete-btn"
+                    onClick={() => onDelete(row.id)}
+                    title="Eliminar"
+                  >
+                    <Trash2 size={18} />
+                    Eliminar
+                  </button>
+                )}
               </td>
             </tr>
           ))}

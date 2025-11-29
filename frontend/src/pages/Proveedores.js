@@ -70,22 +70,26 @@ function Proveedores({ user, onLogout }) {
             {mostrarPDF ? ' Cerrar PDF' : ' Imprimir'}
           </button>
 
-          <button
-            className="btn-primary"
-            onClick={() => navigate('/inactivos/proveedores')}
-            title="Ver proveedores inactivos"
-          >
-            <Eye size={20} />
-            Ver Inactivos
-          </button>
+          {user.rol !== 'agente' && (
+            <>
+              <button
+                className="btn-primary"
+                onClick={() => navigate('/inactivos/proveedores')}
+                title="Ver proveedores inactivos"
+              >
+                <Eye size={20} />
+                Ver Inactivos
+              </button>
 
-          <button
-            className="btn-primary"
-            onClick={() => navigate('/proveedores/new')}
-          >
-            <Plus size={20} />
-            Nuevo Proveedor
-          </button>
+              <button
+                className="btn-primary"
+                onClick={() => navigate('/proveedores/new')}
+              >
+                <Plus size={20} />
+                Nuevo Proveedor
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -111,8 +115,8 @@ function Proveedores({ user, onLogout }) {
           <Table
             columns={columns}
             data={proveedores}
-            onEdit={(id) => navigate(`/proveedores/edit/${id}`)}
-            onDelete={handleDelete}
+            onEdit={user.rol !== 'agente' ? (id) => navigate(`/proveedores/edit/${id}`) : null}
+            onDelete={user.rol !== 'agente' ? handleDelete : null}
             loading={loading}
           />
         </>
