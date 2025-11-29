@@ -70,6 +70,12 @@ export const reservasService = {
   addProveedor: (id, data) => api.post(`/reservas/${id}/proveedores`, data),
   updateProveedor: (id, rpId, data) => api.put(`/reservas/${id}/proveedores/${rpId}`, data),
   deleteProveedor: (id, rpId) => api.delete(`/reservas/${id}/proveedores/${rpId}`),
+  // Pasajeros
+  addPasajero: (id, data) => api.post(`/reservas/${id}/pasajeros`, data),
+  deletePasajero: (id, pid) => api.delete(`/reservas/${id}/pasajeros/${pid}`),
+  // Pagos
+  addPago: (id, data) => api.post(`/reservas/${id}/pagos`, data),
+  updatePago: (id, pid, data) => api.put(`/reservas/${id}/pagos/${pid}`, data),
 };
 
 export default api;

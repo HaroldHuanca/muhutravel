@@ -1,36 +1,93 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reservasService, clientesService, paquetesService, empleadosService } from '../services/api';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Plus, Trash, DollarSign, User } from 'lucide-react';
 import './EditPage.css';
 
 function ReservasEdit({ user, onLogout }) {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [formData, setFormData] = useState({
-    numero_reserva: '',
-    cliente_id: '',
-    paquete_id: '',
-    empleado_id: '',
-    cantidad_personas: '',
-    precio_total: '',
-    estado: 'pendiente',
-    comentario: '',
-  });
+  const isNew = !id;
+
+  // Estados generales
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [clientes, setClientes] = useState([]);
   const [paquetes, setPaquetes] = useState([]);
   const [empleados, setEmpleados] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+
+  // Estado para Wizard (Solo Nuevo)
+  const [step, setStep] = useState(1);
+
+  // Datos del Formulario
+  const [formData, setFormData] = useState({
+    numero_reserva: `RES-${Date.now()}`, // Autogenerado por defecto
+    cliente_id: '',
+    paquete_id: '',
+    empleado_id: '',
+    cantidad_personas: 1,
+    precio_total: 0,
+    estado: 'pendiente',
+    comentario: '',
+  });
+
+  // Datos de Pasajeros
+  const [pasajeros, setPasajeros] = useState([]);
+
+  // Datos de Pago Inicial (Solo Nuevo)
+  const [pagoInicial, setPagoInicial] = useState({
+    tipo_pago: 'none', // none, partial (25%), full (100%)
+    monto: 0,
+    metodo_pago: 'Transferencia',
+    referencia: '',
+    notas: 'Pago inicial'
+  });
+
+  // Datos para Edición (Listas cargadas)
+  const [pagosLista, setPagosLista] = useState([]);
+  const [historialLista, setHistorialLista] = useState([]);
 
   useEffect(() => {
-    fetchDatos();
-    if (id) {
-      fetchReserva();
+    fetchCatalogos();
+    if (!isNew) {
+      fetchReservaCompleta();
     }
   }, [id]);
 
-  const fetchDatos = async () => {
+  // Calcular precio automático cuando cambia paquete o cantidad (Solo Nuevo)
+  useEffect(() => {
+    if (isNew && formData.paquete_id && formData.cantidad_personas) {
+      const paquete = paquetes.find(p => p.id === parseInt(formData.paquete_id));
+      if (paquete) {
+        setFormData(prev => ({
+          ...prev,
+          precio_total: paquete.precio * prev.cantidad_personas
+        }));
+      }
+    }
+  }, [formData.paquete_id, formData.cantidad_personas, paquetes, isNew]);
+
+  // Inicializar pasajeros cuando cambia cantidad (Solo Nuevo)
+  useEffect(() => {
+    if (isNew) {
+      const cantidad = parseInt(formData.cantidad_personas) || 0;
+      setPasajeros(prev => {
+        const newPasajeros = [...prev];
+        if (cantidad > newPasajeros.length) {
+          // Agregar faltantes
+          for (let i = newPasajeros.length; i < cantidad; i++) {
+            newPasajeros.push({ nombres: '', apellidos: '', tipo_documento: 'DNI', documento: '', fecha_nacimiento: '' });
+          }
+        } else if (cantidad < newPasajeros.length) {
+          // Quitar sobrantes
+          newPasajeros.splice(cantidad);
+        }
+        return newPasajeros;
+      });
+    }
+  }, [formData.cantidad_personas, isNew]);
+
+  const fetchCatalogos = async () => {
     try {
       const [cRes, pRes, eRes] = await Promise.all([
         clientesService.getAll(''),
@@ -41,15 +98,18 @@ function ReservasEdit({ user, onLogout }) {
       setPaquetes(pRes.data);
       setEmpleados(eRes.data);
     } catch (err) {
-      console.error('Error al cargar datos:', err);
+      console.error('Error al cargar catálogos:', err);
     }
   };
 
-  const fetchReserva = async () => {
+  const fetchReservaCompleta = async () => {
     setLoading(true);
     try {
-      const response = await reservasService.getById(id);
-      setFormData(response.data);
+      const res = await reservasService.getById(id);
+      setFormData(res.data);
+      setPasajeros(res.data.pasajeros || []);
+      setPagosLista(res.data.pagos || []);
+      setHistorialLista(res.data.historial || []);
     } catch (err) {
       setError('Error al cargar reserva');
     } finally {
@@ -59,184 +119,384 @@ function ReservasEdit({ user, onLogout }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  const handlePasajeroChange = (index, field, value) => {
+    const newPasajeros = [...pasajeros];
+    newPasajeros[index][field] = value;
+    setPasajeros(newPasajeros);
+  };
 
-    try {
-      if (id) {
-        await reservasService.update(id, formData);
-      } else {
-        await reservasService.create(formData);
+  const handlePagoChange = (e) => {
+    const { name, value } = e.target;
+    setPagoInicial(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handlePaymentOptionChange = (option) => {
+    let monto = 0;
+    if (option === 'partial') {
+      monto = formData.precio_total * 0.25;
+    } else if (option === 'full') {
+      monto = formData.precio_total;
+    }
+
+    setPagoInicial(prev => ({
+      ...prev,
+      tipo_pago: option,
+      monto: monto
+    }));
+  };
+
+  // --- WIZARD NAVIGATION ---
+  const nextStep = () => {
+    if (step === 1) {
+      if (!formData.cliente_id || !formData.paquete_id || !formData.cantidad_personas) {
+        setError('Por favor complete los campos obligatorios');
+        return;
       }
+    }
+    setError('');
+    setStep(step + 1);
+  };
+
+  const prevStep = () => setStep(step - 1);
+
+  // --- SUBMIT (NUEVO) ---
+  const handleSubmitNew = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      // 1. Crear Reserva
+      // Determinar estado basado en pago
+      let estadoReserva = 'pendiente';
+      if (pagoInicial.tipo_pago === 'full') {
+        estadoReserva = 'confirmada';
+      }
+
+      const resReserva = await reservasService.create({
+        ...formData,
+        estado: estadoReserva
+      });
+      const reservaId = resReserva.data.id;
+
+      // 2. Crear Pasajeros
+      for (const p of pasajeros) {
+        await reservasService.addPasajero(reservaId, p);
+      }
+
+      // 3. Crear Pago (si aplica)
+      if (pagoInicial.tipo_pago !== 'none') {
+        await reservasService.addPago(reservaId, {
+          monto: pagoInicial.monto,
+          metodo_pago: pagoInicial.metodo_pago,
+          referencia: pagoInicial.referencia,
+          notas: pagoInicial.tipo_pago === 'partial' ? 'Pago Inicial 25%' : 'Pago Total'
+        });
+      }
+
       navigate('/reservas');
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al guardar reserva');
+      console.error(err);
+      setError('Error al crear la reserva completa. Es posible que se haya creado parcialmente.');
     } finally {
       setLoading(false);
     }
   };
 
+  // --- SUBMIT (EDICION - Solo datos básicos) ---
+  const handleSubmitEdit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await reservasService.update(id, formData);
+      alert('Reserva actualizada');
+      fetchReservaCompleta(); // Recargar para ver historial actualizado
+    } catch (err) {
+      setError('Error al actualizar');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- RENDER WIZARD STEPS ---
+
+  const renderStep1 = () => (
+    <div className="wizard-step">
+      <h2>Paso 1: Datos Generales</h2>
+      <div className="form-row">
+        <div className="form-group">
+          <label>Cliente *</label>
+          <select name="cliente_id" value={formData.cliente_id} onChange={handleChange} required>
+            <option value="">Seleccionar...</option>
+            {clientes.map(c => <option key={c.id} value={c.id}>{c.nombres} {c.apellidos}</option>)}
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Paquete *</label>
+          <select name="paquete_id" value={formData.paquete_id} onChange={handleChange} required>
+            <option value="">Seleccionar...</option>
+            {paquetes.map(p => <option key={p.id} value={p.id}>{p.nombre} (${p.precio})</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label>Cantidad Pasajeros *</label>
+          <input type="number" name="cantidad_personas" value={formData.cantidad_personas} onChange={handleChange} min="1" required />
+        </div>
+        <div className="form-group">
+          <label>Precio Total (Calculado)</label>
+          <input type="number" name="precio_total" value={formData.precio_total} onChange={handleChange} />
+        </div>
+      </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label>Empleado (Vendedor)</label>
+          <select name="empleado_id" value={formData.empleado_id} onChange={handleChange}>
+            <option value="">Seleccionar...</option>
+            {empleados.map(e => <option key={e.id} value={e.id}>{e.nombres} {e.apellidos}</option>)}
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Número Reserva (Auto)</label>
+          <input
+            type="text"
+            name="numero_reserva"
+            value={formData.numero_reserva}
+            readOnly
+            style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep2 = () => (
+    <div className="wizard-step">
+      <h2>Paso 2: Información de Pasajeros</h2>
+      {pasajeros.map((p, index) => (
+        <div key={index} className="pasajero-card">
+          <h4>Pasajero {index + 1}</h4>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Nombres</label>
+              <input value={p.nombres} onChange={(e) => handlePasajeroChange(index, 'nombres', e.target.value)} placeholder="Nombres" />
+            </div>
+            <div className="form-group">
+              <label>Apellidos</label>
+              <input value={p.apellidos} onChange={(e) => handlePasajeroChange(index, 'apellidos', e.target.value)} placeholder="Apellidos" />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Tipo Doc.</label>
+              <select value={p.tipo_documento} onChange={(e) => handlePasajeroChange(index, 'tipo_documento', e.target.value)}>
+                <option value="DNI">DNI</option>
+                <option value="Pasaporte">Pasaporte</option>
+                <option value="CE">CE</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Documento</label>
+              <input value={p.documento} onChange={(e) => handlePasajeroChange(index, 'documento', e.target.value)} placeholder="Número" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderStep3 = () => (
+    <div className="wizard-step">
+      <h2>Paso 3: Opciones de Pago</h2>
+
+      <div className="payment-options">
+        <div
+          className={`payment-option ${pagoInicial.tipo_pago === 'none' ? 'selected' : ''}`}
+          onClick={() => handlePaymentOptionChange('none')}
+        >
+          <div className="option-header">
+            <input type="radio" checked={pagoInicial.tipo_pago === 'none'} readOnly />
+            <span>Sin Pago Ahora</span>
+          </div>
+          <p>La reserva quedará como <strong>Pendiente</strong>.</p>
+        </div>
+
+        <div
+          className={`payment-option ${pagoInicial.tipo_pago === 'partial' ? 'selected' : ''}`}
+          onClick={() => handlePaymentOptionChange('partial')}
+        >
+          <div className="option-header">
+            <input type="radio" checked={pagoInicial.tipo_pago === 'partial'} readOnly />
+            <span>Pago Inicial (25%)</span>
+          </div>
+          <p>Monto: <strong>S/. {(formData.precio_total * 0.25).toFixed(2)}</strong></p>
+          <p>La reserva quedará como <strong>Pendiente</strong>.</p>
+        </div>
+
+        <div
+          className={`payment-option ${pagoInicial.tipo_pago === 'full' ? 'selected' : ''}`}
+          onClick={() => handlePaymentOptionChange('full')}
+        >
+          <div className="option-header">
+            <input type="radio" checked={pagoInicial.tipo_pago === 'full'} readOnly />
+            <span>Pago Total (100%)</span>
+          </div>
+          <p>Monto: <strong>S/. {formData.precio_total.toFixed(2)}</strong></p>
+          <p>La reserva quedará como <strong>Confirmada</strong>.</p>
+        </div>
+      </div>
+
+      {pagoInicial.tipo_pago !== 'none' && (
+        <div className="payment-form">
+          <h3>Detalles del Pago</h3>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Monto a Pagar</label>
+              <input
+                type="number"
+                name="monto"
+                value={pagoInicial.monto}
+                readOnly
+                style={{ backgroundColor: '#f0f0f0' }}
+              />
+            </div>
+            <div className="form-group">
+              <label>Método</label>
+              <select name="metodo_pago" value={pagoInicial.metodo_pago} onChange={handlePagoChange}>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Transferencia">Transferencia</option>
+                <option value="Tarjeta">Tarjeta</option>
+                <option value="Yape/Plin">Yape/Plin</option>
+              </select>
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Referencia / Nro Operación</label>
+              <input type="text" name="referencia" value={pagoInicial.referencia} onChange={handlePagoChange} placeholder="Ej: OP-123456" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="summary-card">
+        <h3>Resumen Final</h3>
+        <p><strong>Paquete:</strong> {paquetes.find(p => p.id == formData.paquete_id)?.nombre}</p>
+        <p><strong>Pasajeros:</strong> {formData.cantidad_personas}</p>
+        <p><strong>Total Reserva:</strong> S/. {formData.precio_total}</p>
+        <p><strong>A Pagar Ahora:</strong> S/. {pagoInicial.monto.toFixed(2)}</p>
+        <p><strong>Estado Resultante:</strong> {pagoInicial.tipo_pago === 'full' ? 'CONFIRMADA' : 'PENDIENTE'}</p>
+      </div>
+    </div>
+  );
+
+  // --- RENDER EDIT VIEW (OLD STYLE + TABS/SECTIONS) ---
+  const renderEditView = () => (
+    <div className="edit-view">
+      <form onSubmit={handleSubmitEdit} className="edit-form">
+        <h2>Editar Reserva</h2>
+        {/* Reutilizar campos básicos aquí si es necesario, simplificado */}
+        <div className="form-row">
+          <div className="form-group">
+            <label>Estado</label>
+            <select name="estado" value={formData.estado} onChange={handleChange}>
+              <option value="pendiente">Pendiente</option>
+              <option value="confirmada">Confirmada</option>
+              <option value="cancelada">Cancelada</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Comentario</label>
+            <input name="comentario" value={formData.comentario} onChange={handleChange} />
+          </div>
+        </div>
+        <button type="submit" className="btn-submit">Actualizar Estado</button>
+      </form>
+
+      <div className="sections-container">
+        <div className="section">
+          <h3>Pasajeros ({pasajeros.length})</h3>
+          <ul className="list-group">
+            {pasajeros.map(p => (
+              <li key={p.id} className="list-item">
+                {p.nombres} {p.apellidos} ({p.documento})
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="section">
+          <h3>Pagos</h3>
+          <ul className="list-group">
+            {pagosLista.map(p => (
+              <li key={p.id} className="list-item">
+                {p.fecha_pago?.substring(0, 10)} - S/. {p.monto} ({p.metodo_pago}) - {p.estado}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="section">
+          <h3>Historial</h3>
+          <ul className="list-group">
+            {historialLista.map(h => (
+              <li key={h.id} className="list-item history-item">
+                <small>{h.fecha_cambio?.substring(0, 16)}</small>: {h.estado_anterior} -&gt; {h.estado_nuevo} ({h.usuario_nombre})
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="container">
       <button className="btn-back" onClick={() => navigate('/reservas')}>
-        <ArrowLeft size={20} />
-        Volver
+        <ArrowLeft size={20} /> Volver
       </button>
-
-      <div className="edit-header">
-        <h1>{id ? 'Editar Reserva' : 'Nueva Reserva'}</h1>
-      </div>
 
       {error && <div className="error-message">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="edit-form">
-        <div className="form-section">
-          <h2>Información de la Reserva</h2>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="numero_reserva">Número de Reserva *</label>
-              <input
-                type="text"
-                id="numero_reserva"
-                name="numero_reserva"
-                value={formData.numero_reserva}
-                onChange={handleChange}
-                required
-                placeholder="Ej: RES001"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="estado">Estado *</label>
-              <select
-                id="estado"
-                name="estado"
-                value={formData.estado}
-                onChange={handleChange}
-                required
-              >
-                <option value="pendiente">Pendiente</option>
-                <option value="confirmada">Confirmada</option>
-                <option value="cancelada">Cancelada</option>
-              </select>
-            </div>
+      {isNew ? (
+        <div className="wizard-container">
+          <div className="wizard-progress">
+            <div className={`step-indicator ${step >= 1 ? 'active' : ''}`}>1. Datos</div>
+            <div className={`step-indicator ${step >= 2 ? 'active' : ''}`}>2. Pasajeros</div>
+            <div className={`step-indicator ${step >= 3 ? 'active' : ''}`}>3. Pago</div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="cliente_id">Cliente *</label>
-              <select
-                id="cliente_id"
-                name="cliente_id"
-                value={formData.cliente_id}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Seleccionar cliente</option>
-                {clientes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nombres} {c.apellidos}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label htmlFor="paquete_id">Paquete *</label>
-              <select
-                id="paquete_id"
-                name="paquete_id"
-                value={formData.paquete_id}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Seleccionar paquete</option>
-                {paquetes.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre} - S/. {p.precio}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="wizard-content">
+            {step === 1 && renderStep1()}
+            {step === 2 && renderStep2()}
+            {step === 3 && renderStep3()}
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="cantidad_personas">Cantidad de Personas *</label>
-              <input
-                type="number"
-                id="cantidad_personas"
-                name="cantidad_personas"
-                value={formData.cantidad_personas}
-                onChange={handleChange}
-                required
-                placeholder="Ingrese cantidad"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="precio_total">Precio Total *</label>
-              <input
-                type="number"
-                id="precio_total"
-                name="precio_total"
-                value={formData.precio_total}
-                onChange={handleChange}
-                required
-                step="0.01"
-                placeholder="Ingrese precio total"
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="empleado_id">Empleado</label>
-              <select
-                id="empleado_id"
-                name="empleado_id"
-                value={formData.empleado_id}
-                onChange={handleChange}
-              >
-                <option value="">Seleccionar empleado</option>
-                {empleados.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.nombres} {e.apellidos}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="comentario">Comentario</label>
-              <textarea
-                id="comentario"
-                name="comentario"
-                value={formData.comentario}
-                onChange={handleChange}
-                placeholder="Ingrese comentarios adicionales"
-              />
-            </div>
+          <div className="wizard-actions">
+            {step > 1 && (
+              <button className="btn-secondary" onClick={prevStep}>
+                Atrás
+              </button>
+            )}
+            {step < 3 ? (
+              <button className="btn-primary" onClick={nextStep}>
+                Siguiente <ArrowRight size={16} />
+              </button>
+            ) : (
+              <button className="btn-success" onClick={handleSubmitNew} disabled={loading}>
+                {loading ? 'Procesando...' : 'Finalizar Reserva'} <Check size={16} />
+              </button>
+            )}
           </div>
         </div>
-
-        <div className="form-actions">
-          <button type="button" className="btn-cancel" onClick={() => navigate('/reservas')}>
-            Cancelar
-          </button>
-          <button type="submit" className="btn-submit" disabled={loading}>
-            {loading ? 'Guardando...' : 'Guardar Reserva'}
-          </button>
-        </div>
-      </form>
+      ) : (
+        renderEditView()
+      )}
     </div>
   );
 }
