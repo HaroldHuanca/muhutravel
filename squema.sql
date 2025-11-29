@@ -97,7 +97,47 @@ CREATE TABLE reserva_proveedores (
 
 
 
+
+-- TABLA: Pasajeros (Detalle de personas en la reserva)
+CREATE TABLE pasajeros (
+    id SERIAL PRIMARY KEY,
+    reserva_id INTEGER NOT NULL REFERENCES reservas(id) ON DELETE CASCADE,
+    nombres VARCHAR(120) NOT NULL,
+    apellidos VARCHAR(120) NOT NULL,
+    tipo_documento VARCHAR(50), -- DNI, Pasaporte, CE
+    documento VARCHAR(50),      -- Número de documento
+    fecha_nacimiento DATE,
+    creado_en TIMESTAMP DEFAULT NOW()
+);
+
+-- TABLA: Pagos (Control de abonos y saldos)
+CREATE TABLE pagos (
+    id SERIAL PRIMARY KEY,
+    reserva_id INTEGER NOT NULL REFERENCES reservas(id) ON DELETE CASCADE,
+    monto DECIMAL(10,2) NOT NULL,
+    fecha_pago TIMESTAMP DEFAULT NOW(),
+    metodo_pago VARCHAR(100),   -- Efectivo, Transferencia, Tarjeta, Yape/Plin
+    referencia VARCHAR(100),    -- Código de operación, nro recibo
+    estado VARCHAR(50) DEFAULT 'completado', -- completado, pendiente, rechazado
+    registrado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    notas TEXT
+);
+
+-- TABLA: Historial de Reservas (Auditoría de estados)
+CREATE TABLE historial_reservas (
+    id SERIAL PRIMARY KEY,
+    reserva_id INTEGER NOT NULL REFERENCES reservas(id) ON DELETE CASCADE,
+    estado_anterior VARCHAR(50),
+    estado_nuevo VARCHAR(50),
+    fecha_cambio TIMESTAMP DEFAULT NOW(),
+    usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    comentario TEXT
+);
+
 -- INDICES (opcionales)
 CREATE INDEX idx_reservas_cliente ON reservas(cliente_id);
 CREATE INDEX idx_reservas_paquete ON reservas(paquete_id);
 CREATE INDEX idx_paquetes_destino ON paquetes(destino);
+CREATE INDEX idx_pasajeros_reserva ON pasajeros(reserva_id);
+CREATE INDEX idx_pagos_reserva ON pagos(reserva_id);
+

@@ -140,7 +140,8 @@ router.get('/:id', verifyToken, async (req, res) => {
         r.fecha_reserva, r.cantidad_personas, r.precio_total, r.estado, r.comentario,
         c.nombres as cliente_nombres, c.apellidos as cliente_apellidos,
         p.nombre as paquete_nombre,
-        e.nombres as empleado_nombres, e.apellidos as empleado_apellidos
+        e.nombres as empleado_nombres, e.apellidos as empleado_apellidos,
+        COALESCE((SELECT SUM(monto) FROM pagos WHERE reserva_id = r.id AND estado = 'completado'), 0) as total_pagado
       FROM reservas r
       LEFT JOIN clientes c ON r.cliente_id = c.id
       LEFT JOIN paquetes p ON r.paquete_id = p.id
@@ -154,7 +155,29 @@ router.get('/:id', verifyToken, async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Reserva no encontrada', id: id });
     }
-    res.json(result.rows[0]);
+
+    const reserva = result.rows[0];
+
+    // Obtener pasajeros
+    const pasajeros = await pool.query('SELECT * FROM pasajeros WHERE reserva_id = $1', [id]);
+    reserva.pasajeros = pasajeros.rows;
+
+    // Obtener pagos
+    const pagos = await pool.query('SELECT * FROM pagos WHERE reserva_id = $1 ORDER BY fecha_pago DESC', [id]);
+    reserva.pagos = pagos.rows;
+
+    // Obtener historial
+    const historial = await pool.query(`
+      SELECT h.*, u.username as usuario_nombre 
+      FROM historial_reservas h
+      LEFT JOIN usuarios u ON h.usuario_id = u.id
+      WHERE h.reserva_id = $1 
+      ORDER BY h.fecha_cambio DESC`, 
+      [id]
+    );
+    reserva.historial = historial.rows;
+
+    res.json(reserva);
   } catch (err) {
     console.error('Error al obtener reserva:', err);
     res.status(500).json({ error: 'Error al obtener reserva', details: err.message });
@@ -182,23 +205,107 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-// Actualizar reserva
+// Actualizar reserva (con historial)
 router.put('/:id', verifyToken, async (req, res) => {
+  const client = await pool.connect();
   try {
-    const { numero_reserva, cliente_id, paquete_id, empleado_id, cantidad_personas, precio_total, estado, comentario } = req.body;
-    const result = await pool.query(
-      'UPDATE reservas SET numero_reserva = $1, cliente_id = $2, paquete_id = $3, empleado_id = $4, cantidad_personas = $5, precio_total = $6, estado = $7, comentario = $8 WHERE id = $9 RETURNING *',
-      [numero_reserva, cliente_id, paquete_id, empleado_id, cantidad_personas, precio_total, estado, comentario, req.params.id]
-    );
+    await client.query('BEGIN');
+    const { numero_reserva, cliente_id, paquete_id, empleado_id, cantidad_personas, precio_total, estado, comentario, usuario_id } = req.body;
+    const reserva_id = req.params.id;
 
-    if (result.rows.length === 0) {
+    // Obtener estado anterior
+    const oldReserva = await client.query('SELECT estado FROM reservas WHERE id = $1', [reserva_id]);
+    if (oldReserva.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Reserva no encontrada' });
     }
+    const estadoAnterior = oldReserva.rows[0].estado;
 
+    const result = await client.query(
+      'UPDATE reservas SET numero_reserva = $1, cliente_id = $2, paquete_id = $3, empleado_id = $4, cantidad_personas = $5, precio_total = $6, estado = $7, comentario = $8 WHERE id = $9 RETURNING *',
+      [numero_reserva, cliente_id, paquete_id, empleado_id, cantidad_personas, precio_total, estado, comentario, reserva_id]
+    );
+
+    // Registrar en historial si hubo cambio de estado
+    if (estado && estado !== estadoAnterior) {
+      await client.query(
+        'INSERT INTO historial_reservas (reserva_id, estado_anterior, estado_nuevo, usuario_id, comentario) VALUES ($1, $2, $3, $4, $5)',
+        [reserva_id, estadoAnterior, estado, usuario_id || req.user?.id, comentario] // Asumiendo que req.user tiene el ID del usuario logueado
+      );
+    }
+
+    await client.query('COMMIT');
+    res.json(result.rows[0]);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar reserva' });
+  } finally {
+    client.release();
+  }
+});
+
+// ============ RUTAS PARA PASAJEROS ============
+
+// Agregar pasajero
+router.post('/:id/pasajeros', verifyToken, async (req, res) => {
+  try {
+    const { nombres, apellidos, tipo_documento, documento, fecha_nacimiento } = req.body;
+    const reserva_id = req.params.id;
+
+    const result = await pool.query(
+      'INSERT INTO pasajeros (reserva_id, nombres, apellidos, tipo_documento, documento, fecha_nacimiento) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [reserva_id, nombres, apellidos, tipo_documento, documento, fecha_nacimiento]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al agregar pasajero' });
+  }
+});
+
+// Eliminar pasajero
+router.delete('/:id/pasajeros/:pid', verifyToken, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM pasajeros WHERE id = $1 AND reserva_id = $2', [req.params.pid, req.params.id]);
+    res.json({ message: 'Pasajero eliminado' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar pasajero' });
+  }
+});
+
+// ============ RUTAS PARA PAGOS ============
+
+// Registrar pago
+router.post('/:id/pagos', verifyToken, async (req, res) => {
+  try {
+    const { monto, metodo_pago, referencia, notas, usuario_id } = req.body;
+    const reserva_id = req.params.id;
+
+    const result = await pool.query(
+      'INSERT INTO pagos (reserva_id, monto, metodo_pago, referencia, notas, registrado_por) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [reserva_id, monto, metodo_pago, referencia, notas, usuario_id || req.user?.id]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al registrar pago' });
+  }
+});
+
+// Actualizar estado de pago (ej. anular)
+router.put('/:id/pagos/:pid', verifyToken, async (req, res) => {
+  try {
+    const { estado } = req.body;
+    const result = await pool.query(
+      'UPDATE pagos SET estado = $1 WHERE id = $2 AND reserva_id = $3 RETURNING *',
+      [estado, req.params.pid, req.params.id]
+    );
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Error al actualizar reserva' });
+    res.status(500).json({ error: 'Error al actualizar pago' });
   }
 });
 
