@@ -1,6 +1,11 @@
 const pool = require('../db');
 
-async function runMigration() {
+async function up(client) {
+    // Si se pasa un cliente (dentro de una transacción del runner), usarlo.
+    // Si no, usar el pool global (para compatibilidad o ejecución manual, aunque idealmente siempre debería ser via runner).
+    // Nota: El runner pasa 'client', que es una conexión específica.
+    const db = client || pool;
+
     try {
         console.log('Iniciando migración de paquetes...');
 
@@ -12,16 +17,16 @@ async function runMigration() {
         ];
 
         for (const query of queries) {
-            await pool.query(query);
+            await db.query(query);
             console.log(`Ejecutado: ${query}`);
         }
 
         console.log('Migración completada con éxito.');
-        process.exit(0);
     } catch (err) {
         console.error('Error durante la migración:', err);
-        process.exit(1);
+        throw err; // Re-lanzar para que el runner sepa que falló
     }
 }
 
-runMigration();
+module.exports = { up };
+
