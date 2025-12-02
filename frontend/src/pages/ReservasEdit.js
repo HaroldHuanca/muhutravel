@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reservasService, clientesService, paquetesService, empleadosService } from '../services/api';
-import { ArrowLeft, ArrowRight, Check, Plus, Trash, DollarSign, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Plus, Trash, DollarSign, User, Users, Briefcase } from 'lucide-react';
 import './EditPage.css';
 
 function ReservasEdit({ user, onLogout }) {
@@ -298,23 +298,24 @@ function ReservasEdit({ user, onLogout }) {
         </div>
         <div className="form-group">
           <label>Tipo de Paquete</label>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <label style={{ fontWeight: 'normal' }}>
-              <input
-                type="radio"
-                name="viewType"
-                checked={viewType === 'REGULAR'}
-                onChange={() => { setViewType('REGULAR'); setFormData({ ...formData, paquete_id: '' }); }}
-              /> Regular
-            </label>
-            <label style={{ fontWeight: 'normal' }}>
-              <input
-                type="radio"
-                name="viewType"
-                checked={viewType === 'PRIVADO'}
-                onChange={() => { setViewType('PRIVADO'); setFormData({ ...formData, paquete_id: '' }); }}
-              /> Privado
-            </label>
+          <div className="mini-type-selector">
+            <div
+              className={`mini-card ${viewType === 'REGULAR' ? 'selected' : ''}`}
+              onClick={() => { setViewType('REGULAR'); setFormData({ ...formData, paquete_id: '' }); }}
+            >
+              <div className="icon-wrapper"><Users size={24} /></div>
+              <span className="type-title">Regular</span>
+              {viewType === 'REGULAR' && <div className="check-badge"><Check size={10} /></div>}
+            </div>
+
+            <div
+              className={`mini-card ${viewType === 'PRIVADO' ? 'selected' : ''}`}
+              onClick={() => { setViewType('PRIVADO'); setFormData({ ...formData, paquete_id: '' }); }}
+            >
+              <div className="icon-wrapper"><Briefcase size={24} /></div>
+              <span className="type-title">Privado</span>
+              {viewType === 'PRIVADO' && <div className="check-badge"><Check size={10} /></div>}
+            </div>
           </div>
         </div>
         <div className="form-group">
@@ -362,7 +363,43 @@ function ReservasEdit({ user, onLogout }) {
         </div>
         <div className="form-group">
           <label>Precio Total (Calculado)</label>
-          <input type="number" name="precio_total" value={formData.precio_total} onChange={handleChange} />
+          <input
+            type="number"
+            name="precio_total"
+            value={formData.precio_total}
+            onChange={handleChange}
+            readOnly
+            style={{ backgroundColor: '#f9f9f9', cursor: 'not-allowed' }}
+          />
+
+          {viewType === 'PRIVADO' && formData.paquete_id && (
+            (() => {
+              const p = paquetes.find(pkg => pkg.id === parseInt(formData.paquete_id));
+              if (!p) return null;
+              const cantidad = parseInt(formData.cantidad_personas) || 1;
+              const maxRecomendado = p.max_pasajeros_recomendado || 0;
+              const extra = cantidad > maxRecomendado ? cantidad - maxRecomendado : 0;
+
+              return (
+                <div className="price-breakdown">
+                  <div className="breakdown-row">
+                    <span>Precio Base Grupo:</span>
+                    <span>S/. {parseFloat(p.precio_grupo).toFixed(2)}</span>
+                  </div>
+                  {extra > 0 && (
+                    <div className="breakdown-row extra">
+                      <span>+ {extra} pasajero(s) extra (x S/. {p.precio_adicional_persona}):</span>
+                      <span>S/. {(extra * parseFloat(p.precio_adicional_persona)).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="breakdown-total">
+                    <span>Total:</span>
+                    <span>S/. {formData.precio_total.toFixed(2)}</span>
+                  </div>
+                </div>
+              );
+            })()
+          )}
         </div>
       </div>
       <div className="form-row">

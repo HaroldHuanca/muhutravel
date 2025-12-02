@@ -522,3 +522,119 @@
   font-size: 14px;
   font-weight: bold;
 }
+
+/* MINI TYPE SELECTOR (For Reservation Form) */
+.mini-type-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 0;
+  /* Align better with inputs */
+  height: 48px;
+  /* Match typical input height (12px padding + text + borders) */
+}
+
+.mini-card {
+  flex: 1;
+  /* Stretch to fill available width like inputs */
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  /* Match input border radius */
+  padding: 0 15px;
+  /* Horizontal padding only */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: row;
+  /* Horizontal layout */
+  align-items: center;
+  justify-content: center;
+  /* Center content */
+  gap: 10px;
+  position: relative;
+  overflow: visible;
+  height: 100%;
+  /* Fill container height */
+}
+
+.mini-card:hover {
+  border-color: #cbd5e0;
+  background: #f8fafc;
+}
+
+.mini-card.selected {
+  border-color: #667eea;
+  background: #ebf4ff;
+  box-shadow: none;
+  /* Flat style to match inputs */
+}
+
+.mini-card .icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  /* Remove background for cleaner look */
+  border-radius: 0;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.mini-card.selected .icon-wrapper {
+  background: transparent;
+  color: #667eea;
+  transform: none;
+}
+
+.mini-card .type-title {
+  font-weight: 500;
+  color: #64748b;
+  font-size: 14px;
+  /* Match input font size */
+  text-align: left;
+}
+
+.mini-card.selected .type-title {
+  color: #4c51bf;
+  font-weight: 600;
+}
+
+/* Hide check badge for this very compact view, or make it very subtle */
+.mini-card .check-badge {
+  display: none;
+}
+
+/* PRICE BREAKDOWN */
+.price-breakdown {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  color: #64748b;
+}
+
+.breakdown-row.extra {
+  color: #eab308;
+  font-weight: 500;
+}
+
+.breakdown-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e0;
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 14px;
+}
