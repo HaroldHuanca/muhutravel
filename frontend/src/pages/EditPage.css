@@ -638,3 +638,65 @@
   color: #1e293b;
   font-size: 14px;
 }
+/* MODAL STYLES */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #2d3748;
+  font-size: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 10px;
+}
+
+.payment-options-modal .btn-option {
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.payment-options-modal .btn-option:hover {
+  background: #f1f5f9 !important;
+}
+
+.payment-options-modal .btn-option.active {
+  border-color: #667eea !important;
+  color: #4c51bf !important;
+  font-weight: 600;
+}
+
+.modal-actions {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+

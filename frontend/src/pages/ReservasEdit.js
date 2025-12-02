@@ -47,6 +47,15 @@ function ReservasEdit({ user, onLogout }) {
   const [pagosLista, setPagosLista] = useState([]);
   const [historialLista, setHistorialLista] = useState([]);
 
+  // Estado para Modal de Pago (Edición)
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentModalData, setPaymentModalData] = useState({
+    tipo_pago: 'partial', // partial, full, remaining
+    monto: 0,
+    metodo_pago: 'Transferencia',
+    notas: ''
+  });
+
   useEffect(() => {
     fetchCatalogos();
     if (!isNew) {
@@ -278,6 +287,88 @@ function ReservasEdit({ user, onLogout }) {
       fetchReservaCompleta(); // Recargar para ver historial actualizado
     } catch (err) {
       setError('Error al actualizar');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- PAYMENT MODAL LOGIC (EDICION) ---
+  const handleOpenPaymentModal = () => {
+    const totalPagado = pagosLista.reduce((acc, p) => acc + (p.estado === 'completado' ? parseFloat(p.monto) : 0), 0);
+    const precioTotal = parseFloat(formData.precio_total);
+    const saldoPendiente = precioTotal - totalPagado;
+
+    if (saldoPendiente <= 0) {
+      alert('Esta reserva ya está pagada en su totalidad.');
+      return;
+    }
+
+    let tipoInicial = 'remaining';
+    let montoInicial = saldoPendiente;
+
+    // Si no se ha pagado nada aún
+    if (totalPagado === 0) {
+      tipoInicial = 'partial'; // Sugerir pago parcial por defecto
+      montoInicial = precioTotal * 0.30;
+    }
+
+    setPaymentModalData({
+      tipo_pago: tipoInicial,
+      monto: montoInicial,
+      metodo_pago: 'Transferencia',
+      notas: tipoInicial === 'partial' ? 'Pago Inicial 30%' : (tipoInicial === 'full' ? 'Pago Total' : 'Saldo Restante')
+    });
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentModalChange = (e) => {
+    const { name, value } = e.target;
+    setPaymentModalData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePaymentTypeChange = (type) => {
+    const totalPagado = pagosLista.reduce((acc, p) => acc + (p.estado === 'completado' ? parseFloat(p.monto) : 0), 0);
+    const precioTotal = parseFloat(formData.precio_total);
+    const saldoPendiente = precioTotal - totalPagado;
+
+    let nuevoMonto = 0;
+    let nuevasNotas = '';
+
+    if (type === 'partial') {
+      nuevoMonto = precioTotal * 0.30;
+      nuevasNotas = 'Pago Inicial 30%';
+    } else if (type === 'full') {
+      nuevoMonto = precioTotal;
+      nuevasNotas = 'Pago Total';
+    } else if (type === 'remaining') {
+      nuevoMonto = saldoPendiente;
+      nuevasNotas = 'Saldo Restante';
+    }
+
+    setPaymentModalData(prev => ({
+      ...prev,
+      tipo_pago: type,
+      monto: nuevoMonto,
+      notas: nuevasNotas
+    }));
+  };
+
+  const handleSubmitPayment = async () => {
+    setLoading(true);
+    try {
+      await reservasService.addPago(id, {
+        monto: parseFloat(paymentModalData.monto),
+        metodo_pago: paymentModalData.metodo_pago,
+        referencia: null,
+        notas: paymentModalData.notas
+      });
+
+      setShowPaymentModal(false);
+      alert('Pago registrado correctamente');
+      fetchReservaCompleta(); // Recargar datos
+    } catch (err) {
+      console.error(err);
+      alert('Error al registrar el pago: ' + (err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
     }
@@ -560,6 +651,107 @@ function ReservasEdit({ user, onLogout }) {
         </div>
         <button type="submit" className="btn-submit">Actualizar Estado</button>
       </form>
+
+      {/* Botón para registrar pago si hay saldo pendiente */}
+      {(() => {
+        const totalPagado = pagosLista.reduce((acc, p) => acc + (p.estado === 'completado' ? parseFloat(p.monto) : 0), 0);
+        const precioTotal = parseFloat(formData.precio_total);
+        const saldoPendiente = precioTotal - totalPagado;
+
+        if (saldoPendiente > 0.1 && (formData.estado === 'pendiente_pago' || formData.estado === 'confirmada')) {
+          return (
+            <div className="payment-action-container" style={{ margin: '20px 0', padding: '15px', backgroundColor: '#e8f5e9', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong>Saldo Pendiente: </strong> S/. {saldoPendiente.toFixed(2)}
+              </div>
+              <button type="button" className="btn-success" onClick={handleOpenPaymentModal}>
+                <DollarSign size={16} style={{ marginRight: '5px' }} /> Registrar Pago
+              </button>
+            </div>
+          );
+        }
+        return null;
+      })()}
+
+      {/* MODAL DE PAGO */}
+      {showPaymentModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Registrar Pago</h3>
+
+            <div className="payment-options-modal" style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+              {pagosLista.length === 0 && (
+                <>
+                  <button
+                    type="button"
+                    className={`btn-option ${paymentModalData.tipo_pago === 'partial' ? 'active' : ''}`}
+                    onClick={() => handlePaymentTypeChange('partial')}
+                    style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: paymentModalData.tipo_pago === 'partial' ? '#e3f2fd' : 'white' }}
+                  >
+                    Pago Inicial (30%)
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn-option ${paymentModalData.tipo_pago === 'full' ? 'active' : ''}`}
+                    onClick={() => handlePaymentTypeChange('full')}
+                    style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: paymentModalData.tipo_pago === 'full' ? '#e3f2fd' : 'white' }}
+                  >
+                    Pago Total (100%)
+                  </button>
+                </>
+              )}
+              {pagosLista.length > 0 && (
+                <button
+                  type="button"
+                  className={`btn-option ${paymentModalData.tipo_pago === 'remaining' ? 'active' : ''}`}
+                  onClick={() => handlePaymentTypeChange('remaining')}
+                  style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#e3f2fd' }}
+                >
+                  Pagar Restante
+                </button>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label>Monto a Pagar</label>
+              <input
+                type="number"
+                name="monto"
+                value={paymentModalData.monto}
+                onChange={handlePaymentModalChange}
+              // Si es 'remaining' o 'partial' calculado, quizás queramos dejarlo editable o no. 
+              // El usuario pidió "hacer el pago total o parcial", asumimos montos fijos o editables?
+              // Dejaremos editable pero pre-llenado.
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Método de Pago</label>
+              <select name="metodo_pago" value={paymentModalData.metodo_pago} onChange={handlePaymentModalChange}>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Transferencia">Transferencia</option>
+                <option value="Tarjeta">Tarjeta</option>
+                <option value="Yape/Plin">Yape/Plin</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Notas</label>
+              <input
+                type="text"
+                name="notas"
+                value={paymentModalData.notas}
+                onChange={handlePaymentModalChange}
+              />
+            </div>
+
+            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+              <button type="button" className="btn-secondary" onClick={() => setShowPaymentModal(false)}>Cancelar</button>
+              <button type="button" className="btn-success" onClick={handleSubmitPayment}>Confirmar Pago</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="sections-container">
         <div className="section">
