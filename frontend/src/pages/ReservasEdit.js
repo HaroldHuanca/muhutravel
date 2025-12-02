@@ -18,6 +18,7 @@ function ReservasEdit({ user, onLogout }) {
 
   // Estado para Wizard (Solo Nuevo)
   const [step, setStep] = useState(1);
+  const [viewType, setViewType] = useState('REGULAR'); // REGULAR | PRIVADO
 
   // Datos del Formulario
   const [formData, setFormData] = useState({
@@ -54,13 +55,31 @@ function ReservasEdit({ user, onLogout }) {
   }, [id]);
 
   // Calcular precio automático cuando cambia paquete o cantidad (Solo Nuevo)
+  // Calcular precio automático cuando cambia paquete o cantidad (Solo Nuevo)
   useEffect(() => {
     if (isNew && formData.paquete_id && formData.cantidad_personas) {
       const paquete = paquetes.find(p => p.id === parseInt(formData.paquete_id));
       if (paquete) {
+        let nuevoPrecio = 0;
+        const cantidad = parseInt(formData.cantidad_personas);
+
+        if (paquete.tipo === 'REGULAR') {
+          nuevoPrecio = parseFloat(paquete.precio) * cantidad;
+        } else if (paquete.tipo === 'PRIVADO') {
+          // Precio base del grupo
+          nuevoPrecio = parseFloat(paquete.precio_grupo);
+
+          // Calcular extra si excede el máximo recomendado
+          const maxRecomendado = paquete.max_pasajeros_recomendado || 0;
+          if (cantidad > maxRecomendado && paquete.precio_adicional_persona) {
+            const extraPax = cantidad - maxRecomendado;
+            nuevoPrecio += extraPax * parseFloat(paquete.precio_adicional_persona);
+          }
+        }
+
         setFormData(prev => ({
           ...prev,
-          precio_total: paquete.precio * prev.cantidad_personas
+          precio_total: nuevoPrecio
         }));
       }
     }
@@ -278,17 +297,68 @@ function ReservasEdit({ user, onLogout }) {
           </select>
         </div>
         <div className="form-group">
+          <label>Tipo de Paquete</label>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <label style={{ fontWeight: 'normal' }}>
+              <input
+                type="radio"
+                name="viewType"
+                checked={viewType === 'REGULAR'}
+                onChange={() => { setViewType('REGULAR'); setFormData({ ...formData, paquete_id: '' }); }}
+              /> Regular
+            </label>
+            <label style={{ fontWeight: 'normal' }}>
+              <input
+                type="radio"
+                name="viewType"
+                checked={viewType === 'PRIVADO'}
+                onChange={() => { setViewType('PRIVADO'); setFormData({ ...formData, paquete_id: '' }); }}
+              /> Privado
+            </label>
+          </div>
+        </div>
+        <div className="form-group">
           <label>Paquete *</label>
           <select name="paquete_id" value={formData.paquete_id} onChange={handleChange} required>
             <option value="">Seleccionar...</option>
-            {paquetes.map(p => <option key={p.id} value={p.id}>{p.nombre} ({p.tipo} - ${p.precio})</option>)}
+            {paquetes
+              .filter(p => p.tipo === viewType)
+              .map(p => {
+                const cuposDisponibles = p.cupos - (parseInt(p.reservas_actuales) || 0);
+                const label = viewType === 'REGULAR'
+                  ? `${p.nombre} (S/. ${p.precio} - ${cuposDisponibles} cupos)`
+                  : `${p.nombre} (Grupo: S/. ${p.precio_grupo})`;
+                return <option key={p.id} value={p.id}>{label}</option>;
+              })}
           </select>
         </div>
       </div>
       <div className="form-row">
         <div className="form-group">
           <label>Cantidad Pasajeros *</label>
-          <input type="number" name="cantidad_personas" value={formData.cantidad_personas} onChange={handleChange} min="1" required />
+          <input
+            type="number"
+            name="cantidad_personas"
+            value={formData.cantidad_personas}
+            onChange={handleChange}
+            min="1"
+            max={(() => {
+              if (viewType === 'REGULAR' && formData.paquete_id) {
+                const p = paquetes.find(pkg => pkg.id === parseInt(formData.paquete_id));
+                if (p) return p.cupos - (parseInt(p.reservas_actuales) || 0);
+              }
+              return undefined;
+            })()}
+            required
+          />
+          {viewType === 'REGULAR' && formData.paquete_id && (
+            <small style={{ color: '#666' }}>
+              Máximo: {(() => {
+                const p = paquetes.find(pkg => pkg.id === parseInt(formData.paquete_id));
+                return p ? (p.cupos - (parseInt(p.reservas_actuales) || 0)) : '-';
+              })()}
+            </small>
+          )}
         </div>
         <div className="form-group">
           <label>Precio Total (Calculado)</label>

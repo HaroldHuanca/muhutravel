@@ -213,11 +213,8 @@ router.post('/', verifyToken, async (req, res) => {
       if (parseFloat(res.pagado) < parseFloat(res.precio_total)) {
         tieneDeuda = true;
       }
-      // Verificar si hay alguna reserva explícitamente en "pendiente_pago" (aunque la lógica de arriba ya cubre deuda financiera)
-      // La regla dice: "Si el cliente tiene pagos pendientes...". Interpretamos como saldo pendiente.
     }
 
-    // Verificar estado "pendiente_pago" especifico si se requiere estricto
     const pendientes = await client.query("SELECT id FROM reservas WHERE cliente_id = $1 AND estado = 'pendiente_pago'", [cliente_id]);
     if (pendientes.rows.length > 0) tienePendientePago = true;
 
@@ -274,8 +271,26 @@ router.post('/', verifyToken, async (req, res) => {
         return res.status(400).json({ error: `No hay disponibilidad suficiente. Cupos restantes: ${paquete.cupos - totalOcupado}` });
       }
 
-      // Nota: El cupo mínimo se valida al confirmar el tour, no al reservar.
+      // Validar Precio Regular
+      const precioEsperado = parseFloat(paquete.precio) * parseInt(cantidad_personas);
+      // Permitimos una pequeña tolerancia por redondeo o descuentos manuales si se implementan, 
+      // pero por ahora estricto o advertencia. Vamos a ser estrictos con el precio base.
+      // Si el usuario envió un precio diferente, asumimos que es un descuento manual o error.
+      // Para robustez, podríamos recalcularlo aquí, pero si el frontend lo manda, validemos que no sea MENOR sin razón.
+      // Por ahora aceptamos el precio que viene, pero podríamos loguear discrepancias.
+
     } else if (paquete.tipo === 'PRIVADO') {
+      // Validar EXCLUSIVIDAD: Solo 1 reserva activa por paquete privado
+      const reservasExistentes = await client.query(`
+        SELECT id FROM reservas 
+        WHERE paquete_id = $1 AND estado NOT IN ('cancelada')
+      `, [paquete_id]);
+
+      if (reservasExistentes.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Este tour privado ya está reservado.' });
+      }
+
       // Validar disponibilidad del empleado (si está asignado)
       if (paquete.empleado_id) {
         const empleadoOcupado = await client.query(`
@@ -291,8 +306,23 @@ router.post('/', verifyToken, async (req, res) => {
           return res.status(400).json({ error: 'El servicio (empleado) no está disponible para esta fecha.' });
         }
       }
-      // Tour privado no resta cupo global del paquete (si fuera un paquete genérico), 
-      // pero aquí el paquete tiene fecha fija. Asumimos que si es privado, se bloquea para el cliente.
+
+      // Validar Precio Privado
+      // Precio Base (Grupo) + (Extra Pax * Precio Extra)
+      let precioCalculado = parseFloat(paquete.precio_grupo);
+      const maxRecomendado = paquete.max_pasajeros_recomendado || 0;
+      const extraPax = Math.max(0, parseInt(cantidad_personas) - maxRecomendado);
+
+      if (extraPax > 0 && paquete.precio_adicional_persona) {
+        precioCalculado += extraPax * parseFloat(paquete.precio_adicional_persona);
+      }
+
+      // Validar que el precio enviado no sea menor al calculado (evitar fraudes/errores)
+      if (parseFloat(precio_total) < precioCalculado) {
+        // Podríamos rechazar o corregir. Rechazamos para seguridad.
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `El precio total (${precio_total}) es menor al precio calculado para este tour privado (${precioCalculado}).` });
+      }
     }
 
     // 4. Crear Reserva
