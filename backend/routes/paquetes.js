@@ -10,13 +10,15 @@ router.get('/', verifyToken, async (req, res) => {
     const search = req.query.search || '';
     const query = `
       SELECT 
-        p.id, p.nombre, p.destino, p.duracion_dias, p.precio, p.cupos, 
+        p.id, p.nombre, p.destino, p.duracion_dias, p.precio, p.cupos, p.min_cupos, p.tipo,
+        p.descripcion, p.precio_grupo, p.max_pasajeros_recomendado, p.precio_adicional_persona, 
         TO_CHAR(p.fecha_inicio, 'YYYY-MM-DD') as fecha_inicio,
         TO_CHAR(p.fecha_fin, 'YYYY-MM-DD') as fecha_fin,
         p.proveedor_id, p.empleado_id, 
         p.activo, p.creado_en,
         pr.nombre as proveedor_nombre,
-        e.nombres as empleado_nombres, e.apellidos as empleado_apellidos
+        e.nombres as empleado_nombres, e.apellidos as empleado_apellidos,
+        (SELECT COALESCE(SUM(cantidad_personas), 0) FROM reservas r WHERE r.paquete_id = p.id AND r.estado != 'cancelada') as reservas_actuales
       FROM paquetes p
       LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
       LEFT JOIN empleados e ON p.empleado_id = e.id
@@ -37,7 +39,8 @@ router.get('/inactivos/lista', verifyToken, async (req, res) => {
     const search = req.query.search || '';
     const query = `
       SELECT 
-        p.id, p.nombre, p.destino, p.duracion_dias, p.precio, p.cupos, 
+        p.id, p.nombre, p.destino, p.duracion_dias, p.precio, p.cupos, p.min_cupos, p.tipo,
+        p.descripcion, p.precio_grupo, p.max_pasajeros_recomendado, p.precio_adicional_persona, 
         TO_CHAR(p.fecha_inicio, 'YYYY-MM-DD') as fecha_inicio,
         TO_CHAR(p.fecha_fin, 'YYYY-MM-DD') as fecha_fin,
         p.proveedor_id, p.empleado_id, 
@@ -63,7 +66,8 @@ router.get('/:id', verifyToken, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
-        p.id, p.nombre, p.destino, p.duracion_dias, p.precio, p.cupos, 
+        p.id, p.nombre, p.destino, p.duracion_dias, p.precio, p.cupos, p.min_cupos, p.tipo,
+        p.descripcion, p.precio_grupo, p.max_pasajeros_recomendado, p.precio_adicional_persona,
         TO_CHAR(p.fecha_inicio, 'YYYY-MM-DD') as fecha_inicio,
         TO_CHAR(p.fecha_fin, 'YYYY-MM-DD') as fecha_fin,
         p.proveedor_id, p.empleado_id, 
@@ -89,15 +93,27 @@ router.get('/:id', verifyToken, async (req, res) => {
 // Crear paquete
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { nombre, destino, duracion_dias, precio, cupos, fecha_inicio, fecha_fin, proveedor_id, empleado_id } = req.body;
+    const {
+      nombre, destino, duracion_dias, precio, cupos, min_cupos, tipo,
+      descripcion, precio_grupo, max_pasajeros_recomendado, precio_adicional_persona,
+      fecha_inicio, fecha_fin, proveedor_id, empleado_id
+    } = req.body;
 
-    if (!nombre || !destino || !duracion_dias || !precio || !cupos || !fecha_inicio || !fecha_fin) {
-      return res.status(400).json({ error: 'Campos requeridos: nombre, destino, duracion_dias, precio, cupos, fecha_inicio, fecha_fin' });
+    if (!nombre || !destino || !duracion_dias || !fecha_inicio || !fecha_fin) {
+      return res.status(400).json({ error: 'Campos básicos requeridos faltantes' });
     }
 
     const result = await pool.query(
-      'INSERT INTO paquetes (nombre, destino, duracion_dias, precio, cupos, fecha_inicio, fecha_fin, proveedor_id, empleado_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-      [nombre, destino, duracion_dias, precio, cupos, fecha_inicio, fecha_fin, proveedor_id, empleado_id]
+      `INSERT INTO paquetes (
+        nombre, destino, duracion_dias, precio, cupos, min_cupos, tipo, 
+        descripcion, precio_grupo, max_pasajeros_recomendado, precio_adicional_persona,
+        fecha_inicio, fecha_fin, proveedor_id, empleado_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
+      [
+        nombre, destino, duracion_dias, precio || 0, cupos || 1, min_cupos || 1, tipo || 'REGULAR',
+        descripcion, precio_grupo, max_pasajeros_recomendado, precio_adicional_persona,
+        fecha_inicio, fecha_fin, proveedor_id, empleado_id
+      ]
     );
 
     res.status(201).json(result.rows[0]);
@@ -110,10 +126,23 @@ router.post('/', verifyToken, async (req, res) => {
 // Actualizar paquete
 router.put('/:id', verifyToken, async (req, res) => {
   try {
-    const { nombre, destino, duracion_dias, precio, cupos, fecha_inicio, fecha_fin, proveedor_id, empleado_id, activo } = req.body;
+    const {
+      nombre, destino, duracion_dias, precio, cupos, min_cupos, tipo,
+      descripcion, precio_grupo, max_pasajeros_recomendado, precio_adicional_persona,
+      fecha_inicio, fecha_fin, proveedor_id, empleado_id, activo
+    } = req.body;
+
     const result = await pool.query(
-      'UPDATE paquetes SET nombre = $1, destino = $2, duracion_dias = $3, precio = $4, cupos = $5, fecha_inicio = $6, fecha_fin = $7, proveedor_id = $8, empleado_id = $9, activo = $10 WHERE id = $11 RETURNING *',
-      [nombre, destino, duracion_dias, precio, cupos, fecha_inicio, fecha_fin, proveedor_id, empleado_id, activo, req.params.id]
+      `UPDATE paquetes SET 
+        nombre = $1, destino = $2, duracion_dias = $3, precio = $4, cupos = $5, min_cupos = $6, tipo = $7, 
+        descripcion = $8, precio_grupo = $9, max_pasajeros_recomendado = $10, precio_adicional_persona = $11,
+        fecha_inicio = $12, fecha_fin = $13, proveedor_id = $14, empleado_id = $15, activo = $16 
+       WHERE id = $17 RETURNING *`,
+      [
+        nombre, destino, duracion_dias, precio, cupos, min_cupos, tipo,
+        descripcion, precio_grupo, max_pasajeros_recomendado, precio_adicional_persona,
+        fecha_inicio, fecha_fin, proveedor_id, empleado_id, activo, req.params.id
+      ]
     );
 
     if (result.rows.length === 0) {

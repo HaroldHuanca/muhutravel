@@ -445,3 +445,80 @@
   font-size: 18px;
   color: #2d3748;
 }
+
+/* TYPE SELECTION STYLES */
+.type-selection {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+
+.type-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 40px 30px;
+  width: 280px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.type-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e0;
+}
+
+.type-card.selected {
+  border-color: #667eea;
+  background: linear-gradient(to bottom right, #ffffff, #f0f4ff);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+}
+
+.type-card svg {
+  color: #718096;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.type-card.selected svg {
+  color: #667eea;
+  transform: scale(1.1);
+}
+
+.type-card h3 {
+  margin: 0 0 15px 0;
+  color: #2d3748;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.type-card p {
+  margin: 0;
+  color: #718096;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Add a subtle checkmark indicator for selected state */
+.type-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #667eea;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+}

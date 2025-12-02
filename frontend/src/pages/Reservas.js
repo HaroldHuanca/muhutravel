@@ -61,6 +61,7 @@ function Reservas({ user, onLogout }) {
     { key: 'paquete_nombre', label: 'Paquete' },
     { key: 'cantidad_personas', label: 'Personas' },
     { key: 'precio_total', label: 'Precio Total', render: (val) => `S/. ${val}` },
+    { key: 'total_pagado', label: 'Monto Cancelado', render: (val) => `S/. ${parseFloat(val || 0).toFixed(2)}` },
     {
       key: 'estado',
       label: 'Estado',

@@ -1,8 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const { startCleanupJob } = require('./cron/reservationCleanup');
 
 const app = express();
+
+// Start background jobs
+startCleanupJob();
 
 // Middleware
 app.use(cors());

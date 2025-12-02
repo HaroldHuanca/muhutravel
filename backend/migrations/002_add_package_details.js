@@ -1,0 +1,27 @@
+const pool = require('../db');
+
+async function runMigration() {
+    try {
+        console.log('Iniciando migración de paquetes...');
+
+        const queries = [
+            "ALTER TABLE paquetes ADD COLUMN IF NOT EXISTS descripcion TEXT;",
+            "ALTER TABLE paquetes ADD COLUMN IF NOT EXISTS precio_grupo DECIMAL(10,2);",
+            "ALTER TABLE paquetes ADD COLUMN IF NOT EXISTS max_pasajeros_recomendado INTEGER;",
+            "ALTER TABLE paquetes ADD COLUMN IF NOT EXISTS precio_adicional_persona DECIMAL(10,2);"
+        ];
+
+        for (const query of queries) {
+            await pool.query(query);
+            console.log(`Ejecutado: ${query}`);
+        }
+
+        console.log('Migración completada con éxito.');
+        process.exit(0);
+    } catch (err) {
+        console.error('Error durante la migración:', err);
+        process.exit(1);
+    }
+}
+
+runMigration();

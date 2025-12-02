@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import Table from '../components/Table';
 import { paquetesService } from '../services/api';
-// 1. IMPORTAR LO NUEVO (Iconos y librería PDF)
-import { Plus, Eye, Printer, X } from 'lucide-react';
+import { Plus, Eye, Printer, X, Users, Package, CheckCircle, AlertCircle } from 'lucide-react';
 import { PDFViewer } from '@react-pdf/renderer';
 import ReporteGenericoPDF from '../components/ReporteGenericoPDF';
 import './ListPage.css';
@@ -14,8 +13,7 @@ function Paquetes({ user, onLogout }) {
   const [paquetes, setPaquetes] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // 2. ESTADO PARA MOSTRAR/OCULTAR PDF
+  const [viewType, setViewType] = useState('REGULAR'); // REGULAR | PRIVADO
   const [mostrarPDF, setMostrarPDF] = useState(false);
 
   useEffect(() => {
@@ -45,22 +43,59 @@ function Paquetes({ user, onLogout }) {
     }
   };
 
-  const columns = [
-    { key: 'nombre', label: 'Nombre' },
-    { key: 'destino', label: 'Destino' },
-    { key: 'duracion_dias', label: 'Duración (días)' },
-    { key: 'precio', label: 'Precio', render: (val) => `S/. ${val}` },
-    { key: 'cupos', label: 'Cupos' },
-    { key: 'proveedor_nombre', label: 'Proveedor' },
-  ];
+  const filteredPaquetes = paquetes.filter(p => p.tipo === viewType);
+
+  const getColumns = () => {
+    const commonColumns = [
+      { key: 'nombre', label: 'Nombre' },
+      { key: 'destino', label: 'Destino' },
+      { key: 'duracion_dias', label: 'Duración (días)' },
+      { key: 'proveedor_nombre', label: 'Proveedor' },
+      {
+        key: 'activo',
+        label: 'Estado',
+        render: (val) => val ? <span className="badge badge-success">Activo</span> : <span className="badge badge-danger">Inactivo</span>
+      }
+    ];
+
+    if (viewType === 'REGULAR') {
+      return [
+        ...commonColumns,
+        { key: 'precio', label: 'Precio (Persona)', render: (val) => `S/. ${val}` },
+        { key: 'min_cupos', label: 'Min. Salida' },
+        {
+          key: 'cupos',
+          label: 'Cupos',
+          render: (_, row) => {
+            const current = parseInt(row.reservas_actuales || 0);
+            const min = row.min_cupos || 1;
+            const max = row.cupos;
+            const isMet = current >= min;
+
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: isMet ? 'green' : 'red', fontWeight: 'bold' }}>
+                {isMet ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+                <span>{current} / {max}</span>
+              </div>
+            );
+          }
+        }
+      ];
+    } else {
+      return [
+        ...commonColumns,
+        { key: 'precio_grupo', label: 'Precio (Grupo)', render: (val) => `S/. ${val}` },
+        { key: 'max_pasajeros_recomendado', label: 'Max Pax Rec.' },
+        { key: 'precio_adicional_persona', label: 'Precio Extra', render: (val) => val ? `S/. ${val}` : '-' }
+      ];
+    }
+  };
 
   return (
     <div className="container">
       <div className="page-header">
         <h1>Paquetes Turísticos</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
-
-          {/* 3. BOTÓN DE IMPRIMIR */}
           <button
             className="btn-primary"
             onClick={() => setMostrarPDF(!mostrarPDF)}
@@ -94,14 +129,47 @@ function Paquetes({ user, onLogout }) {
         </div>
       </div>
 
-      {/* 4. LÓGICA DE VISUALIZACIÓN */}
+      {/* TABS */}
+      <div className="tabs-container" style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+        <button
+          className={`tab-button ${viewType === 'REGULAR' ? 'active' : ''}`}
+          onClick={() => setViewType('REGULAR')}
+          style={{
+            padding: '10px 20px',
+            borderRadius: '5px',
+            border: 'none',
+            backgroundColor: viewType === 'REGULAR' ? '#007bff' : '#e9ecef',
+            color: viewType === 'REGULAR' ? 'white' : '#495057',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: '8px'
+          }}
+        >
+          <Users size={18} /> Tours Regulares
+        </button>
+        <button
+          className={`tab-button ${viewType === 'PRIVADO' ? 'active' : ''}`}
+          onClick={() => setViewType('PRIVADO')}
+          style={{
+            padding: '10px 20px',
+            borderRadius: '5px',
+            border: 'none',
+            backgroundColor: viewType === 'PRIVADO' ? '#007bff' : '#e9ecef',
+            color: viewType === 'PRIVADO' ? 'white' : '#495057',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: '8px'
+          }}
+        >
+          <Package size={18} /> Tours Privados
+        </button>
+      </div>
+
       {mostrarPDF ? (
         <div style={{ height: '70vh', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
           <PDFViewer width="100%" height="100%">
             <ReporteGenericoPDF
-              title="Reporte de Paquetes Turísticos"
-              columns={columns}
-              data={paquetes}
+              title={`Reporte de Paquetes Turísticos (${viewType})`}
+              columns={getColumns().filter(c => c.key !== 'activo')} // Excluir columna estado si se desea o mantener
+              data={filteredPaquetes}
             />
           </PDFViewer>
         </div>
@@ -114,8 +182,8 @@ function Paquetes({ user, onLogout }) {
           />
 
           <Table
-            columns={columns}
-            data={paquetes}
+            columns={getColumns()}
+            data={filteredPaquetes}
             onEdit={user.rol !== 'agente' ? (id) => navigate(`/paquetes/edit/${id}`) : null}
             onDelete={user.rol !== 'agente' ? handleDelete : null}
             loading={loading}

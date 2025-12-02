@@ -36,10 +36,9 @@ function ReservasEdit({ user, onLogout }) {
 
   // Datos de Pago Inicial (Solo Nuevo)
   const [pagoInicial, setPagoInicial] = useState({
-    tipo_pago: 'none', // none, partial (25%), full (100%)
+    tipo_pago: 'none', // none, partial (30%), full (100%)
     monto: 0,
     metodo_pago: 'Transferencia',
-    referencia: '',
     notas: 'Pago inicial'
   });
 
@@ -86,6 +85,15 @@ function ReservasEdit({ user, onLogout }) {
       });
     }
   }, [formData.cantidad_personas, isNew]);
+
+  // Actualizar monto de pago si cambia el precio total
+  useEffect(() => {
+    if (pagoInicial.tipo_pago === 'partial') {
+      setPagoInicial(prev => ({ ...prev, monto: formData.precio_total * 0.30 }));
+    } else if (pagoInicial.tipo_pago === 'full') {
+      setPagoInicial(prev => ({ ...prev, monto: formData.precio_total }));
+    }
+  }, [formData.precio_total, pagoInicial.tipo_pago]);
 
   const fetchCatalogos = async () => {
     try {
@@ -139,7 +147,7 @@ function ReservasEdit({ user, onLogout }) {
   const handlePaymentOptionChange = (option) => {
     let monto = 0;
     if (option === 'partial') {
-      monto = formData.precio_total * 0.25;
+      monto = formData.precio_total * 0.30;
     } else if (option === 'full') {
       monto = formData.precio_total;
     }
@@ -159,6 +167,14 @@ function ReservasEdit({ user, onLogout }) {
         return;
       }
     }
+    if (step === 2) {
+      // Validar pasajeros
+      const invalidPasajeros = pasajeros.some(p => !p.nombres || !p.apellidos);
+      if (invalidPasajeros) {
+        setError('Por favor complete los nombres y apellidos de todos los pasajeros');
+        return;
+      }
+    }
     setError('');
     setStep(step + 1);
   };
@@ -171,37 +187,63 @@ function ReservasEdit({ user, onLogout }) {
     setError('');
     try {
       // 1. Crear Reserva
-      // Determinar estado basado en pago
-      let estadoReserva = 'pendiente';
-      if (pagoInicial.tipo_pago === 'full') {
-        estadoReserva = 'confirmada';
+      let reservaId;
+      try {
+        // Determinar estado basado en pago
+        let estadoReserva = 'borrador';
+        if (pagoInicial.tipo_pago === 'full' || pagoInicial.tipo_pago === 'partial') {
+          estadoReserva = 'confirmada';
+        } else {
+          estadoReserva = 'pendiente_pago';
+        }
+
+        const sanitizedData = {
+          ...formData,
+          empleado_id: formData.empleado_id || null,
+          precio_total: parseFloat(formData.precio_total),
+          cantidad_personas: parseInt(formData.cantidad_personas),
+          estado: estadoReserva
+        };
+
+        const resReserva = await reservasService.create(sanitizedData);
+        reservaId = resReserva.data.id;
+      } catch (err) {
+        throw new Error(`Error al crear la reserva base: ${err.response?.data?.error || err.message}`);
       }
 
-      const resReserva = await reservasService.create({
-        ...formData,
-        estado: estadoReserva
-      });
-      const reservaId = resReserva.data.id;
-
       // 2. Crear Pasajeros
-      for (const p of pasajeros) {
-        await reservasService.addPasajero(reservaId, p);
+      try {
+        for (const p of pasajeros) {
+          const pasajeroData = {
+            ...p,
+            fecha_nacimiento: p.fecha_nacimiento || null
+          };
+          await reservasService.addPasajero(reservaId, pasajeroData);
+        }
+      } catch (err) {
+        console.error('Error pasajeros:', err);
+        throw new Error(`Error al guardar pasajeros: ${err.response?.data?.error || err.message}`);
       }
 
       // 3. Crear Pago (si aplica)
       if (pagoInicial.tipo_pago !== 'none') {
-        await reservasService.addPago(reservaId, {
-          monto: pagoInicial.monto,
-          metodo_pago: pagoInicial.metodo_pago,
-          referencia: pagoInicial.referencia,
-          notas: pagoInicial.tipo_pago === 'partial' ? 'Pago Inicial 25%' : 'Pago Total'
-        });
+        try {
+          await reservasService.addPago(reservaId, {
+            monto: parseFloat(pagoInicial.monto),
+            metodo_pago: pagoInicial.metodo_pago,
+            referencia: null, // Explícitamente null como pidió el usuario
+            notas: pagoInicial.tipo_pago === 'partial' ? 'Pago Inicial 30%' : 'Pago Total'
+          });
+        } catch (err) {
+          console.error('Error pago:', err);
+          throw new Error(`Error al registrar el pago: ${err.response?.data?.error || err.message}`);
+        }
       }
 
       navigate('/reservas');
     } catch (err) {
       console.error(err);
-      setError('Error al crear la reserva completa. Es posible que se haya creado parcialmente.');
+      setError(err.message || 'Error desconocido al procesar la reserva');
     } finally {
       setLoading(false);
     }
@@ -239,7 +281,7 @@ function ReservasEdit({ user, onLogout }) {
           <label>Paquete *</label>
           <select name="paquete_id" value={formData.paquete_id} onChange={handleChange} required>
             <option value="">Seleccionar...</option>
-            {paquetes.map(p => <option key={p.id} value={p.id}>{p.nombre} (${p.precio})</option>)}
+            {paquetes.map(p => <option key={p.id} value={p.id}>{p.nombre} ({p.tipo} - ${p.precio})</option>)}
           </select>
         </div>
       </div>
@@ -332,10 +374,10 @@ function ReservasEdit({ user, onLogout }) {
         >
           <div className="option-header">
             <input type="radio" checked={pagoInicial.tipo_pago === 'partial'} readOnly />
-            <span>Pago Inicial (25%)</span>
+            <span>Pago Inicial (30%)</span>
           </div>
-          <p>Monto: <strong>S/. {(formData.precio_total * 0.25).toFixed(2)}</strong></p>
-          <p>La reserva quedará como <strong>Pendiente</strong>.</p>
+          <p>Monto: <strong>S/. {(formData.precio_total * 0.30).toFixed(2)}</strong></p>
+          <p>La reserva quedará como <strong>Confirmada</strong>.</p>
         </div>
 
         <div
@@ -375,12 +417,6 @@ function ReservasEdit({ user, onLogout }) {
               </select>
             </div>
           </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Referencia / Nro Operación</label>
-              <input type="text" name="referencia" value={pagoInicial.referencia} onChange={handlePagoChange} placeholder="Ej: OP-123456" />
-            </div>
-          </div>
         </div>
       )}
 
@@ -390,7 +426,7 @@ function ReservasEdit({ user, onLogout }) {
         <p><strong>Pasajeros:</strong> {formData.cantidad_personas}</p>
         <p><strong>Total Reserva:</strong> S/. {formData.precio_total}</p>
         <p><strong>A Pagar Ahora:</strong> S/. {pagoInicial.monto.toFixed(2)}</p>
-        <p><strong>Estado Resultante:</strong> {pagoInicial.tipo_pago === 'full' ? 'CONFIRMADA' : 'PENDIENTE'}</p>
+        <p><strong>Estado Resultante:</strong> {pagoInicial.tipo_pago !== 'none' ? 'CONFIRMADA' : 'PENDIENTE DE PAGO'}</p>
       </div>
     </div>
   );
