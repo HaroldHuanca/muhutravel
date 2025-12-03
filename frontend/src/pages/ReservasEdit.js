@@ -7,9 +7,9 @@ import './EditPage.css';
 function ReservasEdit({ user, onLogout }) {
   const navigate = useNavigate();
   const { id } = useParams();
-  
-  const location = useLocation(); 
-  
+
+  const location = useLocation();
+
   const isNew = !id;
 
   // Estados generales
@@ -40,7 +40,7 @@ function ReservasEdit({ user, onLogout }) {
 
   // Datos de Pago Inicial (Solo Nuevo)
   const [pagoInicial, setPagoInicial] = useState({
-    tipo_pago: 'none', 
+    tipo_pago: 'none',
     monto: 0,
     metodo_pago: 'Transferencia',
     notas: 'Pago inicial'
@@ -54,7 +54,7 @@ function ReservasEdit({ user, onLogout }) {
   useEffect(() => {
     if (isNew && location.state?.clientePreseleccionado) {
       const clienteRecibido = location.state.clientePreseleccionado;
-      
+
       setFormData(prev => ({
         ...prev,
         cliente_id: clienteRecibido.id
@@ -62,17 +62,17 @@ function ReservasEdit({ user, onLogout }) {
 
       setPasajeros(prev => {
         const nuevoArreglo = prev.length > 0 ? [...prev] : [{ nombres: '', apellidos: '', tipo_documento: 'DNI', documento: '', fecha_nacimiento: '' }];
-        
+
         nuevoArreglo[0] = {
-            ...nuevoArreglo[0],
-            nombres: clienteRecibido.nombres,
-            apellidos: clienteRecibido.apellidos,
-            documento: clienteRecibido.documento,
+          ...nuevoArreglo[0],
+          nombres: clienteRecibido.nombres,
+          apellidos: clienteRecibido.apellidos,
+          documento: clienteRecibido.documento,
         };
         return nuevoArreglo;
       });
     }
-  }, [isNew, location.state]); 
+  }, [isNew, location.state]);
   // Estado para Modal de Pago (Edición)
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalData, setPaymentModalData] = useState({
@@ -128,7 +128,7 @@ function ReservasEdit({ user, onLogout }) {
       const cantidad = parseInt(formData.cantidad_personas) || 0;
       setPasajeros(prev => {
         const newPasajeros = [...prev];
-        
+
         if (cantidad > newPasajeros.length) {
           for (let i = newPasajeros.length; i < cantidad; i++) {
             newPasajeros.push({ nombres: '', apellidos: '', tipo_documento: 'DNI', documento: '', fecha_nacimiento: '' });
@@ -309,9 +309,10 @@ function ReservasEdit({ user, onLogout }) {
     try {
       await reservasService.update(id, formData);
       alert('Reserva actualizada');
-      fetchReservaCompleta(); 
+      fetchReservaCompleta();
     } catch (err) {
-      setError('Error al actualizar');
+      console.error(err);
+      setError(err.response?.data?.error || 'Error al actualizar');
     } finally {
       setLoading(false);
     }
@@ -533,11 +534,11 @@ function ReservasEdit({ user, onLogout }) {
             name="numero_reserva"
             value={isNew ? '(Se generará al guardar)' : formData.numero_reserva}
             readOnly
-            style={{ 
-              backgroundColor: '#e9ecef', 
-              color: '#6c757d', 
+            style={{
+              backgroundColor: '#e9ecef',
+              color: '#6c757d',
               cursor: 'not-allowed',
-              fontStyle: 'italic' 
+              fontStyle: 'italic'
             }}
           />
         </div>
@@ -668,8 +669,10 @@ function ReservasEdit({ user, onLogout }) {
           <div className="form-group">
             <label>Estado</label>
             <select name="estado" value={formData.estado} onChange={handleChange}>
-              <option value="pendiente">Pendiente</option>
+              <option value="pendiente_pago">Pendiente de Pago</option>
               <option value="confirmada">Confirmada</option>
+              <option value="en_servicio">En Servicio</option>
+              <option value="completada">Completada</option>
               <option value="cancelada">Cancelada</option>
             </select>
           </div>
