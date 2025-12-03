@@ -52,6 +52,7 @@
   white-space: nowrap;
 }
 
+/* --- Botón Editar --- */
 .edit-btn {
   background: #667eea;
   color: white;
@@ -63,6 +64,7 @@
   box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
 }
 
+/* --- Botón Eliminar --- */
 .delete-btn {
   background: #f56565;
   color: white;
@@ -72,6 +74,18 @@
   background: #e53e3e;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(245, 101, 101, 0.3);
+}
+
+/* --- NUEVO: Botón Reservar --- */
+.reserve-btn {
+  background: #38a169; /* Verde esmeralda */
+  color: white;
+}
+
+.reserve-btn:hover {
+  background: #2f855a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(56, 161, 105, 0.3);
 }
 
 .table-loading,

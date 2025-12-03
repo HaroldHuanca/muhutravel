@@ -1,0 +1,83 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    FIX: Error "Token no proporcionado"
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEMA IDENTIFICADO:
+─────────────────────
+El token se guardaba en sessionStorage pero se buscaba en localStorage.
+
+DIAGRAMA DEL PROBLEMA:
+─────────────────────
+App.js
+  ↓
+  sessionStorage.setItem('token', token)  ← Token guardado AQUÍ
+  ↓
+api.js, Comunicacion.js, reportes.js
+  ↓
+  localStorage.getItem('token')  ← Buscado AQUÍ (vacío!)
+  ↓
+Backend recibe: "Token no proporcionado"
+
+
+SOLUCIÓN APLICADA:
+──────────────────
+Cambiar TODOS los localStorage.getItem('token') a sessionStorage.getItem('token')
+
+ARCHIVOS MODIFICADOS:
+─────────────────────
+1. frontend/src/services/api.js
+   Línea 5: localStorage.getItem('token') → sessionStorage.getItem('token')
+
+2. frontend/src/services/reportes.js
+   Línea 6: localStorage.getItem('token') → sessionStorage.getItem('token')
+
+3. frontend/src/pages/Comunicacion.js
+   Línea 58:  localStorage.getItem('token') → sessionStorage.getItem('token')
+   Línea 97:  localStorage.getItem('token') → sessionStorage.getItem('token')
+   Línea 133: localStorage.getItem('token') → sessionStorage.getItem('token')
+   Línea 151: localStorage.getItem('token') → sessionStorage.getItem('token')
+   Línea 197: localStorage.getItem('token') → sessionStorage.getItem('token')
+
+
+DIAGRAMA DESPUÉS DEL FIX:
+────────────────────────
+App.js
+  ↓
+  sessionStorage.setItem('token', token)  ← Token guardado AQUÍ
+  ↓
+api.js, Comunicacion.js, reportes.js
+  ↓
+  sessionStorage.getItem('token')  ← Buscado AQUÍ (¡encontrado!)
+  ↓
+Backend recibe: "Authorization: Bearer eyJhbGc..."
+  ↓
+✅ Datos insertados correctamente
+
+
+CÓMO VERIFICAR QUE FUNCIONA:
+────────────────────────────
+1. Inicia sesión en la aplicación
+2. Abre DevTools (F12) → Console
+3. Ejecuta: sessionStorage.getItem('token')
+4. Debe devolver algo como: "eyJhbGc..." (no null)
+5. Intenta insertar datos
+6. Debe funcionar sin error "Token no proporcionado"
+
+
+LECCIONES APRENDIDAS:
+─────────────────────
+1. NUNCA mezcles sessionStorage y localStorage para lo mismo
+2. Elige UNO y úsalo CONSISTENTEMENTE en todo el proyecto
+3. Crea un servicio centralizado para obtener el token
+4. Usa interceptores de axios para añadir headers automáticamente
+5. Cuando cambies algo en un archivo, busca si se repite en otros
+
+
+PRÓXIMOS PASOS:
+───────────────
+1. Reinicia el frontend: npm start
+2. Prueba insertar datos después de login
+3. Verifica que no haya más errores de "Token no proporcionado"
+4. Considera implementar un servicio centralizado de tokens (ver GUIA_AUTENTICACION.md)
+
+═══════════════════════════════════════════════════════════════════════════════

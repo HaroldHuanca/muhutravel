@@ -8,17 +8,25 @@ import './ListPage.css';
 
 function Usuarios({ user, onLogout }) {
   const navigate = useNavigate();
+  
+  // --- ESTADOS ---
   const [usuarios, setUsuarios] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // --- NUEVO FILTRO ---
+  const [filtroRol, setFiltroRol] = useState('');
+
+  // --- EFECTOS ---
   useEffect(() => {
     fetchUsuarios();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   const fetchUsuarios = async () => {
     setLoading(true);
     try {
+      // La búsqueda de texto va al backend
       const response = await usuariosService.getAll(search);
       setUsuarios(response.data);
     } catch (err) {
@@ -39,6 +47,17 @@ function Usuarios({ user, onLogout }) {
     }
   };
 
+  // --- LÓGICA DE FILTRADO (FRONTEND) ---
+
+  // 1. Obtener lista única de Roles
+  const listaRoles = [...new Set(usuarios.map(u => u.rol).filter(Boolean))];
+
+  // 2. Filtrar data
+  const usuariosFiltrados = usuarios.filter((usuario) => {
+    const coincideRol = filtroRol ? usuario.rol === filtroRol : true;
+    return coincideRol;
+  });
+
   const columns = [
     { key: 'username', label: 'Usuario' },
     { key: 'rol', label: 'Rol' },
@@ -52,6 +71,26 @@ function Usuarios({ user, onLogout }) {
       ),
     },
   ];
+
+  // Estilos (Consistentes con las otras páginas)
+  const selectStyle = {
+    padding: '8px 12px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
+    backgroundColor: '#fff',
+    minWidth: '160px',
+    outline: 'none',
+    cursor: 'pointer',
+    height: '42px'
+  };
+
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '6px',
+    fontWeight: '600',
+    fontSize: '14px',
+    color: '#495057'
+  };
 
   return (
     <div className="container">
@@ -76,15 +115,70 @@ function Usuarios({ user, onLogout }) {
         </div>
       </div>
 
-      <SearchBar
-        value={search}
-        onChange={setSearch}
-        placeholder="Buscar por usuario..."
-      />
+      {/* --- BARRA DE FILTROS INTEGRADA --- */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '15px', 
+        alignItems: 'flex-end', 
+        marginBottom: '20px', 
+        flexWrap: 'wrap',
+        backgroundColor: '#f8f9fa',
+        padding: '20px',
+        borderRadius: '8px',
+        border: '1px solid #e9ecef'
+      }}>
+        
+        {/* 1. Buscador Texto */}
+        <div style={{ flex: 2, minWidth: '300px' }}>
+          <label style={labelStyle}>Búsqueda General</label>
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar por usuario..."
+          />
+        </div>
 
+        {/* 2. Filtro Rol */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <label style={labelStyle}>Filtrar por Rol</label>
+            <select 
+              style={selectStyle}
+              value={filtroRol}
+              onChange={(e) => setFiltroRol(e.target.value)}
+            >
+              <option value="">Todos los Roles</option>
+              {listaRoles.map((rol, index) => (
+                <option key={index} value={rol}>{rol}</option>
+              ))}
+            </select>
+        </div>
+
+        {/* Botón Limpiar */}
+        {filtroRol && (
+          <div style={{ paddingBottom: '2px' }}>
+            <button 
+              onClick={() => setFiltroRol('')}
+              style={{
+                background: 'transparent',
+                border: '1px solid #dc3545',
+                color: '#dc3545',
+                padding: '8px 15px',
+                height: '42px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}
+            >
+              Limpiar
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Tabla usa la data filtrada */}
       <Table
         columns={columns}
-        data={usuarios}
+        data={usuariosFiltrados}
         onEdit={(id) => navigate(`/usuarios/edit/${id}`)}
         onDelete={handleDelete}
         loading={loading}
