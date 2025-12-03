@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { reservasService, clientesService, paquetesService, empleadosService } from '../services/api';
-import { ArrowLeft, ArrowRight, Check, Plus, Trash, DollarSign, User } from 'lucide-react';
+// 1. CORRECCIÓN: Eliminamos los iconos que no se usan (Plus, Trash, DollarSign, User)
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import './EditPage.css';
 
 function ReservasEdit({ user, onLogout }) {
   const navigate = useNavigate();
   const { id } = useParams();
+  
+  const location = useLocation(); 
+  
   const isNew = !id;
 
   // Estados generales
@@ -21,7 +25,7 @@ function ReservasEdit({ user, onLogout }) {
 
   // Datos del Formulario
   const [formData, setFormData] = useState({
-    numero_reserva: `RES-${Date.now()}`, // Autogenerado por defecto
+    numero_reserva: 'Por generar...',
     cliente_id: '',
     paquete_id: '',
     empleado_id: '',
@@ -36,24 +40,50 @@ function ReservasEdit({ user, onLogout }) {
 
   // Datos de Pago Inicial (Solo Nuevo)
   const [pagoInicial, setPagoInicial] = useState({
-    tipo_pago: 'none', // none, partial (30%), full (100%)
+    tipo_pago: 'none', 
     monto: 0,
     metodo_pago: 'Transferencia',
     notas: 'Pago inicial'
   });
 
-  // Datos para Edición (Listas cargadas)
+  // Datos para Edición
   const [pagosLista, setPagosLista] = useState([]);
   const [historialLista, setHistorialLista] = useState([]);
+
+  // --- EFECTO: CAPTURAR CLIENTE ENVIADO ---
+  useEffect(() => {
+    if (isNew && location.state?.clientePreseleccionado) {
+      const clienteRecibido = location.state.clientePreseleccionado;
+      
+      setFormData(prev => ({
+        ...prev,
+        cliente_id: clienteRecibido.id
+      }));
+
+      setPasajeros(prev => {
+        const nuevoArreglo = prev.length > 0 ? [...prev] : [{ nombres: '', apellidos: '', tipo_documento: 'DNI', documento: '', fecha_nacimiento: '' }];
+        
+        nuevoArreglo[0] = {
+            ...nuevoArreglo[0],
+            nombres: clienteRecibido.nombres,
+            apellidos: clienteRecibido.apellidos,
+            documento: clienteRecibido.documento,
+        };
+        return nuevoArreglo;
+      });
+    }
+  }, [isNew, location.state]); 
 
   useEffect(() => {
     fetchCatalogos();
     if (!isNew) {
       fetchReservaCompleta();
     }
+    // 2. CORRECCIÓN: Desactivamos la advertencia de dependencias aquí para evitar bucles
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  // Calcular precio automático cuando cambia paquete o cantidad (Solo Nuevo)
+  // Calcular precio automático
   useEffect(() => {
     if (isNew && formData.paquete_id && formData.cantidad_personas) {
       const paquete = paquetes.find(p => p.id === parseInt(formData.paquete_id));
@@ -66,19 +96,18 @@ function ReservasEdit({ user, onLogout }) {
     }
   }, [formData.paquete_id, formData.cantidad_personas, paquetes, isNew]);
 
-  // Inicializar pasajeros cuando cambia cantidad (Solo Nuevo)
+  // Inicializar pasajeros
   useEffect(() => {
     if (isNew) {
       const cantidad = parseInt(formData.cantidad_personas) || 0;
       setPasajeros(prev => {
         const newPasajeros = [...prev];
+        
         if (cantidad > newPasajeros.length) {
-          // Agregar faltantes
           for (let i = newPasajeros.length; i < cantidad; i++) {
             newPasajeros.push({ nombres: '', apellidos: '', tipo_documento: 'DNI', documento: '', fecha_nacimiento: '' });
           }
         } else if (cantidad < newPasajeros.length) {
-          // Quitar sobrantes
           newPasajeros.splice(cantidad);
         }
         return newPasajeros;
@@ -86,7 +115,7 @@ function ReservasEdit({ user, onLogout }) {
     }
   }, [formData.cantidad_personas, isNew]);
 
-  // Actualizar monto de pago si cambia el precio total
+  // Actualizar monto de pago
   useEffect(() => {
     if (pagoInicial.tipo_pago === 'partial') {
       setPagoInicial(prev => ({ ...prev, monto: formData.precio_total * 0.30 }));
@@ -168,7 +197,6 @@ function ReservasEdit({ user, onLogout }) {
       }
     }
     if (step === 2) {
-      // Validar pasajeros
       const invalidPasajeros = pasajeros.some(p => !p.nombres || !p.apellidos);
       if (invalidPasajeros) {
         setError('Por favor complete los nombres y apellidos de todos los pasajeros');
@@ -189,7 +217,6 @@ function ReservasEdit({ user, onLogout }) {
       // 1. Crear Reserva
       let reservaId;
       try {
-        // Determinar estado basado en pago
         let estadoReserva = 'borrador';
         if (pagoInicial.tipo_pago === 'full' || pagoInicial.tipo_pago === 'partial') {
           estadoReserva = 'confirmada';
@@ -231,7 +258,7 @@ function ReservasEdit({ user, onLogout }) {
           await reservasService.addPago(reservaId, {
             monto: parseFloat(pagoInicial.monto),
             metodo_pago: pagoInicial.metodo_pago,
-            referencia: null, // Explícitamente null como pidió el usuario
+            referencia: null,
             notas: pagoInicial.tipo_pago === 'partial' ? 'Pago Inicial 30%' : 'Pago Total'
           });
         } catch (err) {
@@ -249,14 +276,14 @@ function ReservasEdit({ user, onLogout }) {
     }
   };
 
-  // --- SUBMIT (EDICION - Solo datos básicos) ---
+  // --- SUBMIT (EDICION) ---
   const handleSubmitEdit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       await reservasService.update(id, formData);
       alert('Reserva actualizada');
-      fetchReservaCompleta(); // Recargar para ver historial actualizado
+      fetchReservaCompleta(); 
     } catch (err) {
       setError('Error al actualizar');
     } finally {
@@ -304,13 +331,18 @@ function ReservasEdit({ user, onLogout }) {
           </select>
         </div>
         <div className="form-group">
-          <label>Número Reserva (Auto)</label>
+          <label>Número Reserva (Automático)</label>
           <input
             type="text"
             name="numero_reserva"
-            value={formData.numero_reserva}
+            value={isNew ? '(Se generará al guardar)' : formData.numero_reserva}
             readOnly
-            style={{ backgroundColor: '#f0f0f0', cursor: 'not-allowed' }}
+            style={{ 
+              backgroundColor: '#e9ecef', 
+              color: '#6c757d', 
+              cursor: 'not-allowed',
+              fontStyle: 'italic' 
+            }}
           />
         </div>
       </div>
@@ -422,7 +454,8 @@ function ReservasEdit({ user, onLogout }) {
 
       <div className="summary-card">
         <h3>Resumen Final</h3>
-        <p><strong>Paquete:</strong> {paquetes.find(p => p.id == formData.paquete_id)?.nombre}</p>
+        {/* 3. CORRECCIÓN: Usamos parseInt para evitar el error de eqeqeq y comparar id(num) con id(str) */}
+        <p><strong>Paquete:</strong> {paquetes.find(p => p.id === parseInt(formData.paquete_id))?.nombre}</p>
         <p><strong>Pasajeros:</strong> {formData.cantidad_personas}</p>
         <p><strong>Total Reserva:</strong> S/. {formData.precio_total}</p>
         <p><strong>A Pagar Ahora:</strong> S/. {pagoInicial.monto.toFixed(2)}</p>
@@ -431,12 +464,10 @@ function ReservasEdit({ user, onLogout }) {
     </div>
   );
 
-  // --- RENDER EDIT VIEW (OLD STYLE + TABS/SECTIONS) ---
   const renderEditView = () => (
     <div className="edit-view">
       <form onSubmit={handleSubmitEdit} className="edit-form">
         <h2>Editar Reserva</h2>
-        {/* Reutilizar campos básicos aquí si es necesario, simplificado */}
         <div className="form-row">
           <div className="form-group">
             <label>Estado</label>

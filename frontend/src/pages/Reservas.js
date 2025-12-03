@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
+// No usamos el componente Table genérico aquí porque tu tabla tiene botones personalizados (Proveedores)
 import { reservasService } from '../services/api';
-// 1. IMPORTAR LO NUEVO (Printer, X y las librerías de PDF)
 import { Plus, Link2, Printer, X } from 'lucide-react';
 import { PDFViewer } from '@react-pdf/renderer';
 import ReporteGenericoPDF from '../components/ReporteGenericoPDF';
@@ -10,23 +10,27 @@ import './ListPage.css';
 
 function Reservas({ user, onLogout }) {
   const navigate = useNavigate();
+  
+  // --- ESTADOS ---
   const [reservas, setReservas] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // 2. ESTADO PARA MOSTRAR/OCULTAR PDF
   const [mostrarPDF, setMostrarPDF] = useState(false);
+
+  // --- NUEVOS FILTROS ---
+  const [filtroEstado, setFiltroEstado] = useState('');
+  const [filtroPaquete, setFiltroPaquete] = useState('');
 
   useEffect(() => {
     fetchReservas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   const fetchReservas = async () => {
     setLoading(true);
     try {
+      // La búsqueda de texto sigue yendo al backend
       const response = await reservasService.getAll(search);
-      // Logs opcionales para depuración
-      // console.log('Reservas obtenidas:', response.data);
       setReservas(response.data);
     } catch (err) {
       console.error('Error al obtener reservas:', err);
@@ -46,11 +50,24 @@ function Reservas({ user, onLogout }) {
     }
   };
 
+  // --- LÓGICA DE FILTRADO (FRONTEND) ---
+
+  // 1. Obtener listas únicas para los Selects
+  const listaEstados = [...new Set(reservas.map(r => r.estado).filter(Boolean))];
+  const listaPaquetes = [...new Set(reservas.map(r => r.paquete_nombre).filter(Boolean))];
+
+  // 2. Filtrar la data en memoria
+  const reservasFiltradas = reservas.filter((item) => {
+    const matchEstado = filtroEstado ? item.estado === filtroEstado : true;
+    const matchPaquete = filtroPaquete ? item.paquete_nombre === filtroPaquete : true;
+    return matchEstado && matchPaquete;
+  });
+
   const getEstadoColor = (estado) => {
     switch (estado) {
-      case 'confirmada': return '#48bb78';
-      case 'pendiente': return '#f6ad55';
-      case 'cancelada': return '#f56565';
+      case 'confirmada': return '#48bb78'; // Verde
+      case 'pendiente': return '#f6ad55';  // Naranja
+      case 'cancelada': return '#f56565';  // Rojo
       default: return '#999';
     }
   };
@@ -66,20 +83,39 @@ function Reservas({ user, onLogout }) {
       key: 'estado',
       label: 'Estado',
       render: (val) => (
-        <span style={{ color: getEstadoColor(val), fontWeight: 'bold' }}>
+        <span style={{ color: getEstadoColor(val), fontWeight: 'bold', textTransform: 'capitalize' }}>
           {val}
         </span>
       ),
     },
   ];
 
+  // Estilos
+  const selectStyle = {
+    padding: '8px 12px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
+    backgroundColor: '#fff',
+    minWidth: '160px',
+    outline: 'none',
+    cursor: 'pointer',
+    height: '42px'
+  };
+
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '6px',
+    fontWeight: '600',
+    fontSize: '14px',
+    color: '#495057'
+  };
+
   return (
     <div className="container">
       <div className="page-header">
         <h1>Reservas</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
-
-          {/* 3. BOTÓN DE IMPRIMIR */}
+          
           <button
             className="btn-primary"
             onClick={() => setMostrarPDF(!mostrarPDF)}
@@ -100,31 +136,98 @@ function Reservas({ user, onLogout }) {
         </div>
       </div>
 
-      {/* 4. LÓGICA DE VISUALIZACIÓN */}
       {mostrarPDF ? (
-        // A) VISTA PDF
         <div style={{ height: '70vh', border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
           <PDFViewer width="100%" height="100%">
             <ReporteGenericoPDF
               title="Reporte de Reservas"
               columns={columns}
-              data={reservas}
+              data={reservasFiltradas} // Usamos la data filtrada
             />
           </PDFViewer>
         </div>
       ) : (
-        // B) VISTA NORMAL (Buscador y Tabla Manual)
         <>
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar por número de reserva, cliente o paquete..."
-          />
+          {/* --- BARRA DE FILTROS INTEGRADA --- */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '15px', 
+            alignItems: 'flex-end', 
+            marginBottom: '20px', 
+            flexWrap: 'wrap',
+            backgroundColor: '#f8f9fa',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e9ecef'
+          }}>
+            
+            {/* 1. Buscador Texto */}
+            <div style={{ flex: 2, minWidth: '300px' }}>
+              <label style={labelStyle}>Búsqueda General</label>
+              <SearchBar
+                value={search}
+                onChange={setSearch}
+                placeholder="Buscar por número, cliente o paquete..."
+              />
+            </div>
 
+            {/* 2. Filtro Estado */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+               <label style={labelStyle}>Filtrar por Estado</label>
+               <select 
+                  style={selectStyle}
+                  value={filtroEstado}
+                  onChange={(e) => setFiltroEstado(e.target.value)}
+               >
+                 <option value="">Todos los Estados</option>
+                 {listaEstados.map((est, index) => (
+                   <option key={index} value={est}>{est}</option>
+                 ))}
+               </select>
+            </div>
+
+            {/* 3. Filtro Paquete */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+               <label style={labelStyle}>Filtrar por Paquete</label>
+               <select 
+                  style={selectStyle}
+                  value={filtroPaquete}
+                  onChange={(e) => setFiltroPaquete(e.target.value)}
+               >
+                 <option value="">Todos los Paquetes</option>
+                 {listaPaquetes.map((paq, index) => (
+                   <option key={index} value={paq}>{paq}</option>
+                 ))}
+               </select>
+            </div>
+
+            {/* Botón Limpiar */}
+            {(filtroEstado || filtroPaquete) && (
+              <div style={{ paddingBottom: '2px' }}>
+                <button 
+                  onClick={() => { setFiltroEstado(''); setFiltroPaquete(''); }}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid #dc3545',
+                    color: '#dc3545',
+                    padding: '8px 15px',
+                    height: '42px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
+                  Limpiar
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* --- TABLA MANUAL (Para mantener tus botones personalizados) --- */}
           {loading ? (
             <div className="table-loading">Cargando datos...</div>
-          ) : reservas.length === 0 ? (
-            <div className="table-empty">No hay reservas disponibles</div>
+          ) : reservasFiltradas.length === 0 ? (
+            <div className="table-empty">No hay reservas disponibles con estos filtros</div>
           ) : (
             <div className="table-wrapper">
               <table className="table">
@@ -137,7 +240,8 @@ function Reservas({ user, onLogout }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {reservas.map((row, idx) => (
+                  {/* IMPORTANTE: Mapeamos reservasFiltradas, no reservas */}
+                  {reservasFiltradas.map((row, idx) => (
                     <tr key={row.id || idx}>
                       {columns.map((col) => (
                         <td key={col.key}>

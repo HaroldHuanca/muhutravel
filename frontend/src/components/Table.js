@@ -1,8 +1,10 @@
 import React from 'react';
-import { Edit2, Trash2 } from 'lucide-react';
+// IMPORTAMOS TODOS LOS ICONOS NECESARIOS
+import { Edit2, Trash2, CalendarPlus, RotateCcw } from 'lucide-react';
 import './Table.css';
 
-function Table({ columns, data, onEdit, onDelete, loading = false }) {
+// Recibimos todas las funciones posibles: onEdit, onDelete, onReservar, onRestore
+function Table({ columns, data, onEdit, onDelete, onReservar, onRestore, loading = false }) {
   if (loading) {
     return <div className="table-loading">Cargando datos...</div>;
   }
@@ -35,6 +37,34 @@ function Table({ columns, data, onEdit, onDelete, loading = false }) {
                 </td>
               ))}
               <td className="table-actions">
+                
+                {/* 1. BOTÓN RESTAURAR / REACTIVAR (Para Inactivos) */}
+                {onRestore && (
+                  <button
+                    className="action-btn"
+                    onClick={() => onRestore(row.id)}
+                    title="Reactivar registro"
+                    style={{ backgroundColor: '#3182ce', color: 'white' }} // Azul
+                  >
+                    <RotateCcw size={18} />
+                    Reactivar
+                  </button>
+                )}
+
+                {/* 2. BOTÓN RESERVAR (Para Clientes Activos) */}
+                {onReservar && (
+                  <button
+                    className="action-btn reserve-btn" // Usa la clase CSS verde que creamos
+                    onClick={() => onReservar(row)} 
+                    title="Crear Reserva"
+                    style={{ backgroundColor: '#38a169', color: 'white' }}
+                  >
+                    <CalendarPlus size={18} />
+                    Reservar
+                  </button>
+                )}
+
+                {/* 3. BOTÓN EDITAR */}
                 {onEdit && (
                   <button
                     className="action-btn edit-btn"
@@ -45,6 +75,8 @@ function Table({ columns, data, onEdit, onDelete, loading = false }) {
                     Editar
                   </button>
                 )}
+                
+                {/* 4. BOTÓN ELIMINAR */}
                 {onDelete && (
                   <button
                     className="action-btn delete-btn"

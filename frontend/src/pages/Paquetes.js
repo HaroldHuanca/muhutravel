@@ -10,14 +10,22 @@ import './ListPage.css';
 
 function Paquetes({ user, onLogout }) {
   const navigate = useNavigate();
+  
+  // --- ESTADOS ---
   const [paquetes, setPaquetes] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [viewType, setViewType] = useState('REGULAR'); // REGULAR | PRIVADO
   const [mostrarPDF, setMostrarPDF] = useState(false);
 
+  // --- NUEVOS FILTROS SELECT ---
+  const [filtroDestino, setFiltroDestino] = useState('');
+  const [filtroProveedor, setFiltroProveedor] = useState('');
+
+  // --- EFECTOS ---
   useEffect(() => {
     fetchPaquetes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
   const fetchPaquetes = async () => {
@@ -43,8 +51,25 @@ function Paquetes({ user, onLogout }) {
     }
   };
 
-  const filteredPaquetes = paquetes.filter(p => p.tipo === viewType);
+  // --- LÓGICA DE FILTRADO (COMBINADA) ---
+  
+  // 1. Generar listas únicas para los Selects basándose en la data cargada
+  const listaDestinos = [...new Set(paquetes.map(p => p.destino).filter(Boolean))];
+  const listaProveedores = [...new Set(paquetes.map(p => p.proveedor_nombre).filter(Boolean))];
 
+  // 2. Filtrar Data: Tipo (Tab) + Destino (Select) + Proveedor (Select)
+  const filteredPaquetes = paquetes.filter(p => {
+    // Primero respetamos el TAB seleccionado (Regular o Privado)
+    const matchTipo = p.tipo === viewType;
+    
+    // Luego los selects
+    const matchDestino = filtroDestino ? p.destino === filtroDestino : true;
+    const matchProveedor = filtroProveedor ? p.proveedor_nombre === filtroProveedor : true;
+
+    return matchTipo && matchDestino && matchProveedor;
+  });
+
+  // Configuración de Columnas
   const getColumns = () => {
     const commonColumns = [
       { key: 'nombre', label: 'Nombre' },
@@ -91,6 +116,26 @@ function Paquetes({ user, onLogout }) {
     }
   };
 
+  // Estilos (Consistentes con las otras páginas)
+  const selectStyle = {
+    padding: '8px 12px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
+    backgroundColor: '#fff',
+    minWidth: '160px',
+    outline: 'none',
+    cursor: 'pointer',
+    height: '42px'
+  };
+
+  const labelStyle = {
+    display: 'block',
+    marginBottom: '6px',
+    fontWeight: '600',
+    fontSize: '14px',
+    color: '#495057'
+  };
+
   return (
     <div className="container">
       <div className="page-header">
@@ -129,7 +174,7 @@ function Paquetes({ user, onLogout }) {
         </div>
       </div>
 
-      {/* TABS */}
+      {/* TABS DE TIPO DE TOUR */}
       <div className="tabs-container" style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
         <button
           className={`tab-button ${viewType === 'REGULAR' ? 'active' : ''}`}
@@ -168,22 +213,91 @@ function Paquetes({ user, onLogout }) {
           <PDFViewer width="100%" height="100%">
             <ReporteGenericoPDF
               title={`Reporte de Paquetes Turísticos (${viewType})`}
-              columns={getColumns().filter(c => c.key !== 'activo')} // Excluir columna estado si se desea o mantener
+              columns={getColumns().filter(c => c.key !== 'activo')}
               data={filteredPaquetes}
             />
           </PDFViewer>
         </div>
       ) : (
         <>
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar por nombre o destino..."
-          />
+          {/* --- BARRA DE FILTROS INTEGRADA --- */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '15px', 
+            alignItems: 'flex-end', 
+            marginBottom: '20px', 
+            flexWrap: 'wrap',
+            backgroundColor: '#f8f9fa',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e9ecef'
+          }}>
+            
+            {/* 1. Buscador Texto */}
+            <div style={{ flex: 2, minWidth: '250px' }}>
+              <label style={labelStyle}>Búsqueda General</label>
+              <SearchBar
+                value={search}
+                onChange={setSearch}
+                placeholder="Buscar por nombre o destino..."
+              />
+            </div>
+
+            {/* 2. Filtro Destino */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+               <label style={labelStyle}>Filtrar por Destino</label>
+               <select 
+                  style={selectStyle}
+                  value={filtroDestino}
+                  onChange={(e) => setFiltroDestino(e.target.value)}
+               >
+                 <option value="">Todos los Destinos</option>
+                 {listaDestinos.map((destino, index) => (
+                   <option key={index} value={destino}>{destino}</option>
+                 ))}
+               </select>
+            </div>
+
+            {/* 3. Filtro Proveedor */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+               <label style={labelStyle}>Filtrar por Proveedor</label>
+               <select 
+                  style={selectStyle}
+                  value={filtroProveedor}
+                  onChange={(e) => setFiltroProveedor(e.target.value)}
+               >
+                 <option value="">Todos los Proveedores</option>
+                 {listaProveedores.map((prov, index) => (
+                   <option key={index} value={prov}>{prov}</option>
+                 ))}
+               </select>
+            </div>
+
+            {/* Botón Limpiar */}
+            {(filtroDestino || filtroProveedor) && (
+              <div style={{ paddingBottom: '2px' }}>
+                <button 
+                  onClick={() => { setFiltroDestino(''); setFiltroProveedor(''); }}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid #dc3545',
+                    color: '#dc3545',
+                    padding: '8px 15px',
+                    height: '42px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
+                  Limpiar
+                </button>
+              </div>
+            )}
+          </div>
 
           <Table
             columns={getColumns()}
-            data={filteredPaquetes}
+            data={filteredPaquetes} // Usamos la lista filtrada
             onEdit={user.rol !== 'agente' ? (id) => navigate(`/paquetes/edit/${id}`) : null}
             onDelete={user.rol !== 'agente' ? handleDelete : null}
             loading={loading}

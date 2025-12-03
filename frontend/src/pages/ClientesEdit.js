@@ -4,9 +4,12 @@ import { clientesService } from '../services/api';
 import { ArrowLeft } from 'lucide-react';
 import './EditPage.css';
 
+import Swal from 'sweetalert2';
+
 function ClientesEdit({ user, onLogout }) {
   const navigate = useNavigate();
   const { id } = useParams();
+  
   const [formData, setFormData] = useState({
     nombres: '',
     apellidos: '',
@@ -17,13 +20,18 @@ function ClientesEdit({ user, onLogout }) {
     pais: 'Peru',
     activo: true,
   });
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // 1. NUEVO ESTADO: PARA SABER SI HUBO CAMBIOS
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchCliente();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchCliente = async () => {
@@ -31,8 +39,11 @@ function ClientesEdit({ user, onLogout }) {
     try {
       const response = await clientesService.getById(id);
       setFormData(response.data);
+      // Al cargar datos iniciales, no consideramos que haya cambios aún
+      setHasUnsavedChanges(false);
     } catch (err) {
       setError('Error al cargar cliente');
+      Swal.fire('Error', 'No se pudieron cargar los datos del cliente', 'error');
     } finally {
       setLoading(false);
     }
@@ -44,11 +55,48 @@ function ClientesEdit({ user, onLogout }) {
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
+    // 2. MARCAMOS QUE HUBO CAMBIOS AL ESCRIBIR
+    setHasUnsavedChanges(true);
+  };
+
+  // 3. NUEVA FUNCIÓN PARA SALIR DE MANERA SEGURA
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      Swal.fire({
+        title: '¿Salir sin guardar?',
+        text: "Tienes cambios pendientes que se perderán.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, salir',
+        cancelButtonText: 'Continuar editando'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/clientes');
+        }
+      });
+    } else {
+      // Si no hay cambios, salimos directo
+      navigate('/clientes');
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // 4. VALIDACIÓN MANUAL DE CAMPOS OBLIGATORIOS
+    if (!formData.nombres || !formData.apellidos || !formData.documento) {
+      Swal.fire({
+        title: 'Campos incompletos',
+        text: 'Por favor completa los campos obligatorios (Nombres, Apellidos, Documento).',
+        icon: 'warning',
+        confirmButtonText: 'Entendido'
+      });
+      return; // Detenemos la función aquí
+    }
+
     setLoading(true);
 
     try {
@@ -57,18 +105,40 @@ function ClientesEdit({ user, onLogout }) {
       } else {
         await clientesService.create(formData);
       }
+
+      // Resetear la bandera de cambios porque ya guardamos
+      setHasUnsavedChanges(false);
+
+      await Swal.fire({
+        title: '¡Operación Exitosa!',
+        text: id ? 'El cliente ha sido actualizado correctamente.' : 'El nuevo cliente ha sido registrado correctamente.',
+        icon: 'success',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Aceptar'
+      });
+
       navigate('/clientes');
+
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al guardar cliente');
+      const errorMsg = err.response?.data?.error || 'Error al guardar cliente';
+      setError(errorMsg);
+
+      Swal.fire({
+        title: 'Error',
+        text: errorMsg,
+        icon: 'error',
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Cerrar'
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-
     <div className="container">
-      <button className="btn-back" onClick={() => navigate('/clientes')}>
+      {/* Botón Volver protegido */}
+      <button className="btn-back" onClick={handleCancel}>
         <ArrowLeft size={20} />
         Volver
       </button>
@@ -92,7 +162,7 @@ function ClientesEdit({ user, onLogout }) {
                 name="nombres"
                 value={formData.nombres}
                 onChange={handleChange}
-                required
+                // Quitamos 'required' para que salte nuestra alerta SweetAlert
                 placeholder="Ingrese nombres"
               />
             </div>
@@ -104,7 +174,6 @@ function ClientesEdit({ user, onLogout }) {
                 name="apellidos"
                 value={formData.apellidos}
                 onChange={handleChange}
-                required
                 placeholder="Ingrese apellidos"
               />
             </div>
@@ -119,7 +188,6 @@ function ClientesEdit({ user, onLogout }) {
                 name="documento"
                 value={formData.documento}
                 onChange={handleChange}
-                required
                 placeholder="DNI, CE o Pasaporte"
               />
             </div>
@@ -192,9 +260,11 @@ function ClientesEdit({ user, onLogout }) {
         </div>
 
         <div className="form-actions">
-          <button type="button" className="btn-cancel" onClick={() => navigate('/clientes')}>
+          {/* Botón Cancelar protegido */}
+          <button type="button" className="btn-cancel" onClick={handleCancel}>
             Cancelar
           </button>
+          
           <button type="submit" className="btn-submit" disabled={loading}>
             {loading ? 'Guardando...' : 'Guardar Cliente'}
           </button>

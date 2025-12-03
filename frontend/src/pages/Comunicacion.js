@@ -30,23 +30,21 @@ function Comunicacion({ user, onLogout }) {
   }, [mensajes]);
 
   // Polling automático para nuevos mensajes
-  useEffect(() => {
-    if (selectedCliente && conexionEstablecida) {
-      // Cargar mensajes inmediatamente
-      cargarMensajes();
+useEffect(() => {
+  if (selectedCliente && conexionEstablecida) {
+    cargarMensajes();
+    pollingIntervalRef.current = setInterval(() => {
+      cargarMensajesConDeteccion();
+    }, 2000);
 
-      // Configurar polling cada 2 segundos
-      pollingIntervalRef.current = setInterval(() => {
-        cargarMensajesConDeteccion();
-      }, 2000);
-
-      return () => {
-        if (pollingIntervalRef.current) {
-          clearInterval(pollingIntervalRef.current);
-        }
-      };
-    }
-  }, [selectedCliente, conexionEstablecida]);
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [selectedCliente, conexionEstablecida]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
