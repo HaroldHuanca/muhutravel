@@ -53,7 +53,10 @@ useEffect(() => {
   const cargarClientes = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/clientes');
+      const token = sessionStorage.getItem('token');
+      const response = await axios.get('http://localhost:5000/api/clientes', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setClientes(response.data);
       setError('');
     } catch (err) {
@@ -89,6 +92,7 @@ useEffect(() => {
 
     try {
       setLoading(true);
+      const token = sessionStorage.getItem('token');
 
       // Simular conexión con WhatsApp API
       const nombreCompleto = `${selectedCliente.nombres || ''} ${selectedCliente.apellidos || ''}`.trim();
@@ -121,8 +125,12 @@ useEffect(() => {
     if (!selectedCliente) return;
 
     try {
-      const response = await api.get(
-        `/comunicacion/mensajes/${selectedCliente.id}`
+      const token = sessionStorage.getItem('token');
+      const response = await axios.get(
+        `http://localhost:5000/api/comunicacion/mensajes/${selectedCliente.id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
       setMensajes(response.data);
       lastMessageCountRef.current = response.data.length;
@@ -135,8 +143,12 @@ useEffect(() => {
     if (!selectedCliente) return;
 
     try {
-      const response = await api.get(
-        `/comunicacion/mensajes/${selectedCliente.id}`
+      const token = sessionStorage.getItem('token');
+      const response = await axios.get(
+        `http://localhost:5000/api/comunicacion/mensajes/${selectedCliente.id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
       );
 
       // Solo actualizar si hay nuevos mensajes
@@ -177,6 +189,7 @@ useEffect(() => {
 
     try {
       setLoading(true);
+      const token = sessionStorage.getItem('token');
 
       const response = await api.post(
         '/comunicacion/enviar',

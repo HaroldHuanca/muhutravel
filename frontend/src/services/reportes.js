@@ -1,4 +1,11 @@
-import api from './api';
+import axios from 'axios';
+
+const API_URL = 'http://localhost:5000/api/reportes';
+
+const getAuthHeader = () => {
+    const token = sessionStorage.getItem('token');
+    return { headers: { Authorization: `Bearer ${token}` } };
+};
 
 export const getVentasReport = async (filters) => {
     const response = await api.get('/reportes/ventas', { params: filters });
