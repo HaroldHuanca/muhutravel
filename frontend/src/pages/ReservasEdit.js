@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { reservasService, clientesService, paquetesService, empleadosService } from '../services/api';
 import { ArrowLeft, ArrowRight, Check, Plus, Trash, DollarSign, User, Users, Briefcase } from 'lucide-react';
+import Swal from 'sweetalert2';
 import './EditPage.css';
 
 function ReservasEdit({ user, onLogout }) {
@@ -87,11 +88,9 @@ function ReservasEdit({ user, onLogout }) {
     if (!isNew) {
       fetchReservaCompleta();
     }
-    // 2. CORRECCIÓN: Desactivamos la advertencia de dependencias aquí para evitar bucles
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  // Calcular precio automático cuando cambia paquete o cantidad (Solo Nuevo)
   // Calcular precio automático cuando cambia paquete o cantidad (Solo Nuevo)
   useEffect(() => {
     if (isNew && formData.paquete_id && formData.cantidad_personas) {
@@ -308,7 +307,13 @@ function ReservasEdit({ user, onLogout }) {
     setLoading(true);
     try {
       await reservasService.update(id, formData);
-      alert('Reserva actualizada');
+      Swal.fire({
+        icon: 'success',
+        title: 'Reserva actualizada',
+        text: 'El estado de la reserva se ha actualizado correctamente.',
+        timer: 2000,
+        showConfirmButton: false
+      });
       fetchReservaCompleta();
     } catch (err) {
       console.error(err);
@@ -325,7 +330,11 @@ function ReservasEdit({ user, onLogout }) {
     const saldoPendiente = precioTotal - totalPagado;
 
     if (saldoPendiente <= 0) {
-      alert('Esta reserva ya está pagada en su totalidad.');
+      Swal.fire({
+        icon: 'info',
+        title: 'Pago Completo',
+        text: 'Esta reserva ya está pagada en su totalidad.'
+      });
       return;
     }
 
@@ -390,11 +399,21 @@ function ReservasEdit({ user, onLogout }) {
       });
 
       setShowPaymentModal(false);
-      alert('Pago registrado correctamente');
+      Swal.fire({
+        icon: 'success',
+        title: 'Pago Registrado',
+        text: 'El pago se ha registrado correctamente.',
+        timer: 2000,
+        showConfirmButton: false
+      });
       fetchReservaCompleta(); // Recargar datos
     } catch (err) {
       console.error(err);
-      alert('Error al registrar el pago: ' + (err.response?.data?.error || err.message));
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al registrar el pago: ' + (err.response?.data?.error || err.message)
+      });
     } finally {
       setLoading(false);
     }
