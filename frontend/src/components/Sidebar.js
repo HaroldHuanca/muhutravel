@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -15,6 +15,9 @@ import {
     ChevronRight
 } from 'lucide-react';
 import './Sidebar.css';
+
+// 1. IMPORTAMOS SWEETALERT2
+import Swal from 'sweetalert2';
 
 const Sidebar = ({ user, onLogout, collapsed, setCollapsed }) => {
     const location = useLocation();
@@ -41,6 +44,25 @@ const Sidebar = ({ user, onLogout, collapsed, setCollapsed }) => {
     if (user?.rol === 'admin') {
         menuItems.push({ path: '/usuarios', label: 'Usuarios', icon: Briefcase });
     }
+
+    // 2. FUNCIÓN PARA CONFIRMAR SALIDA
+    const handleLogoutClick = () => {
+        Swal.fire({
+            title: '¿Cerrar Sesión?',
+            text: "¿Estás seguro de que deseas salir del sistema?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6', // Azul
+            cancelButtonColor: '#d33',     // Rojo
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Si confirma, ejecutamos la función original que viene de App.js
+                onLogout();
+            }
+        });
+    };
 
     return (
         <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -78,7 +100,9 @@ const Sidebar = ({ user, onLogout, collapsed, setCollapsed }) => {
                         </div>
                     )}
                 </div>
-                <button className="logout-btn" onClick={onLogout} title="Cerrar sesión">
+                
+                {/* 3. BOTÓN CONECTADO A LA NUEVA FUNCIÓN */}
+                <button className="logout-btn" onClick={handleLogoutClick} title="Cerrar sesión">
                     <LogOut size={20} />
                     {!collapsed && <span>Salir</span>}
                 </button>

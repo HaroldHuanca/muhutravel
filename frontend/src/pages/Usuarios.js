@@ -6,6 +6,9 @@ import { usuariosService } from '../services/api';
 import { Plus, Eye } from 'lucide-react';
 import './ListPage.css';
 
+// 1. IMPORTAMOS SWEETALERT2
+import Swal from 'sweetalert2';
+
 function Usuarios({ user, onLogout }) {
   const navigate = useNavigate();
   
@@ -36,15 +39,44 @@ function Usuarios({ user, onLogout }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Está seguro de que desea desactivar este usuario?')) {
-      try {
-        await usuariosService.delete(id);
-        fetchUsuarios();
-      } catch (err) {
-        alert('Error al desactivar usuario');
+  // 2. FUNCIÓN HANDLE DELETE CON SWEETALERT
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "El usuario será desactivado y perderá acceso al sistema.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6', // Azul
+      cancelButtonColor: '#d33',     // Rojo
+      confirmButtonText: 'Sí, desactivar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          await usuariosService.delete(id);
+          
+          // Alerta de éxito
+          Swal.fire(
+            '¡Desactivado!',
+            'El usuario ha sido desactivado correctamente.',
+            'success'
+          );
+          
+          fetchUsuarios();
+        } catch (err) {
+          console.error(err);
+          // Alerta de error
+          Swal.fire(
+            'Error',
+            'No se pudo desactivar el usuario.',
+            'error'
+          );
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    });
   };
 
   // --- LÓGICA DE FILTRADO (FRONTEND) ---
@@ -72,7 +104,7 @@ function Usuarios({ user, onLogout }) {
     },
   ];
 
-  // Estilos (Consistentes con las otras páginas)
+  // Estilos
   const selectStyle = {
     padding: '8px 12px',
     borderRadius: '4px',

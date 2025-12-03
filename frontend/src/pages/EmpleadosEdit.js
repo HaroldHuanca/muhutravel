@@ -4,9 +4,13 @@ import { empleadosService } from '../services/api';
 import { ArrowLeft } from 'lucide-react';
 import './EditPage.css';
 
+// 1. IMPORTAMOS SWEETALERT2
+import Swal from 'sweetalert2';
+
 function EmpleadosEdit({ user, onLogout }) {
   const navigate = useNavigate();
   const { id } = useParams();
+  
   const [formData, setFormData] = useState({
     nombres: '',
     apellidos: '',
@@ -15,13 +19,18 @@ function EmpleadosEdit({ user, onLogout }) {
     email: '',
     activo: true,
   });
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // 2. ESTADO PARA DETECTAR CAMBIOS SIN GUARDAR
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchEmpleado();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchEmpleado = async () => {
@@ -29,8 +38,10 @@ function EmpleadosEdit({ user, onLogout }) {
     try {
       const response = await empleadosService.getById(id);
       setFormData(response.data);
+      setHasUnsavedChanges(false); // Al cargar, no hay cambios pendientes
     } catch (err) {
       setError('Error al cargar empleado');
+      Swal.fire('Error', 'No se pudieron cargar los datos del empleado', 'error');
     } finally {
       setLoading(false);
     }
@@ -42,11 +53,48 @@ function EmpleadosEdit({ user, onLogout }) {
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
+    // Marcamos que hubo cambios
+    setHasUnsavedChanges(true);
   };
 
+  // 3. FUNCIÓN PARA PROTEGER LA SALIDA
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      Swal.fire({
+        title: '¿Salir sin guardar?',
+        text: "Tienes cambios pendientes que se perderán.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, salir',
+        cancelButtonText: 'Continuar editando'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/empleados');
+        }
+      });
+    } else {
+      navigate('/empleados');
+    }
+  };
+
+  // 4. SUBMIT CON VALIDACIÓN Y ALERTAS
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Validación manual
+    if (!formData.nombres || !formData.apellidos) {
+      Swal.fire({
+        title: 'Campos incompletos',
+        text: 'Por favor ingresa Nombres y Apellidos.',
+        icon: 'warning',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -55,9 +103,33 @@ function EmpleadosEdit({ user, onLogout }) {
       } else {
         await empleadosService.create(formData);
       }
+
+      // Reseteamos bandera de cambios
+      setHasUnsavedChanges(false);
+
+      // Alerta de Éxito
+      await Swal.fire({
+        title: '¡Operación Exitosa!',
+        text: id ? 'El empleado ha sido actualizado correctamente.' : 'El nuevo empleado ha sido registrado correctamente.',
+        icon: 'success',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Aceptar'
+      });
+
       navigate('/empleados');
+
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al guardar empleado');
+      const errorMsg = err.response?.data?.error || 'Error al guardar empleado';
+      setError(errorMsg);
+      
+      // Alerta de Error
+      Swal.fire({
+        title: 'Error',
+        text: errorMsg,
+        icon: 'error',
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Cerrar'
+      });
     } finally {
       setLoading(false);
     }
@@ -65,7 +137,8 @@ function EmpleadosEdit({ user, onLogout }) {
 
   return (
     <div className="container">
-      <button className="btn-back" onClick={() => navigate('/empleados')}>
+      {/* Botón Volver protegido */}
+      <button className="btn-back" onClick={handleCancel}>
         <ArrowLeft size={20} />
         Volver
       </button>
@@ -89,7 +162,7 @@ function EmpleadosEdit({ user, onLogout }) {
                 name="nombres"
                 value={formData.nombres}
                 onChange={handleChange}
-                required
+                // Quitamos required para que salte nuestra alerta personalizada
                 placeholder="Ingrese nombres"
               />
             </div>
@@ -101,7 +174,6 @@ function EmpleadosEdit({ user, onLogout }) {
                 name="apellidos"
                 value={formData.apellidos}
                 onChange={handleChange}
-                required
                 placeholder="Ingrese apellidos"
               />
             </div>
@@ -163,9 +235,11 @@ function EmpleadosEdit({ user, onLogout }) {
         </div>
 
         <div className="form-actions">
-          <button type="button" className="btn-cancel" onClick={() => navigate('/empleados')}>
+          {/* Botón Cancelar protegido */}
+          <button type="button" className="btn-cancel" onClick={handleCancel}>
             Cancelar
           </button>
+          
           <button type="submit" className="btn-submit" disabled={loading}>
             {loading ? 'Guardando...' : 'Guardar Empleado'}
           </button>

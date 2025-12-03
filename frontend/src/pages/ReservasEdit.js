@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { reservasService, clientesService, paquetesService, empleadosService } from '../services/api';
-import { ArrowLeft, ArrowRight, Check, Plus, Trash, DollarSign, User, Users, Briefcase } from 'lucide-react';
-import Swal from 'sweetalert2';
+import { ArrowLeft, ArrowRight, Check, DollarSign, Users, Briefcase } from 'lucide-react';
 import './EditPage.css';
+
+// 1. IMPORTAMOS SWEETALERT2
+import Swal from 'sweetalert2';
 
 function ReservasEdit({ user, onLogout }) {
   const navigate = useNavigate();
   const { id } = useParams();
-
   const location = useLocation();
-
   const isNew = !id;
 
   // Estados generales
@@ -22,7 +22,10 @@ function ReservasEdit({ user, onLogout }) {
 
   // Estado para Wizard (Solo Nuevo)
   const [step, setStep] = useState(1);
-  const [viewType, setViewType] = useState('REGULAR'); // REGULAR | PRIVADO
+  const [viewType, setViewType] = useState('REGULAR'); 
+
+  // 2. ESTADO PARA DETECTAR CAMBIOS SIN GUARDAR
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Datos del Formulario
   const [formData, setFormData] = useState({
@@ -51,6 +54,15 @@ function ReservasEdit({ user, onLogout }) {
   const [pagosLista, setPagosLista] = useState([]);
   const [historialLista, setHistorialLista] = useState([]);
 
+  // Estado para Modal de Pago (Edición)
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentModalData, setPaymentModalData] = useState({
+    tipo_pago: 'partial',
+    monto: 0,
+    metodo_pago: 'Transferencia',
+    notas: ''
+  });
+
   // --- EFECTO: CAPTURAR CLIENTE ENVIADO ---
   useEffect(() => {
     if (isNew && location.state?.clientePreseleccionado) {
@@ -63,7 +75,6 @@ function ReservasEdit({ user, onLogout }) {
 
       setPasajeros(prev => {
         const nuevoArreglo = prev.length > 0 ? [...prev] : [{ nombres: '', apellidos: '', tipo_documento: 'DNI', documento: '', fecha_nacimiento: '' }];
-
         nuevoArreglo[0] = {
           ...nuevoArreglo[0],
           nombres: clienteRecibido.nombres,
@@ -72,16 +83,9 @@ function ReservasEdit({ user, onLogout }) {
         };
         return nuevoArreglo;
       });
+      setHasUnsavedChanges(true); // Se pre-cargaron datos, hay cambios
     }
   }, [isNew, location.state]);
-  // Estado para Modal de Pago (Edición)
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentModalData, setPaymentModalData] = useState({
-    tipo_pago: 'partial', // partial, full, remaining
-    monto: 0,
-    metodo_pago: 'Transferencia',
-    notas: ''
-  });
 
   useEffect(() => {
     fetchCatalogos();
@@ -91,7 +95,7 @@ function ReservasEdit({ user, onLogout }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  // Calcular precio automático cuando cambia paquete o cantidad (Solo Nuevo)
+  // Calcular precio automático
   useEffect(() => {
     if (isNew && formData.paquete_id && formData.cantidad_personas) {
       const paquete = paquetes.find(p => p.id === parseInt(formData.paquete_id));
@@ -102,10 +106,7 @@ function ReservasEdit({ user, onLogout }) {
         if (paquete.tipo === 'REGULAR') {
           nuevoPrecio = parseFloat(paquete.precio) * cantidad;
         } else if (paquete.tipo === 'PRIVADO') {
-          // Precio base del grupo
           nuevoPrecio = parseFloat(paquete.precio_grupo);
-
-          // Calcular extra si excede el máximo recomendado
           const maxRecomendado = paquete.max_pasajeros_recomendado || 0;
           if (cantidad > maxRecomendado && paquete.precio_adicional_persona) {
             const extraPax = cantidad - maxRecomendado;
@@ -127,7 +128,6 @@ function ReservasEdit({ user, onLogout }) {
       const cantidad = parseInt(formData.cantidad_personas) || 0;
       setPasajeros(prev => {
         const newPasajeros = [...prev];
-
         if (cantidad > newPasajeros.length) {
           for (let i = newPasajeros.length; i < cantidad; i++) {
             newPasajeros.push({ nombres: '', apellidos: '', tipo_documento: 'DNI', documento: '', fecha_nacimiento: '' });
@@ -172,8 +172,9 @@ function ReservasEdit({ user, onLogout }) {
       setPasajeros(res.data.pasajeros || []);
       setPagosLista(res.data.pagos || []);
       setHistorialLista(res.data.historial || []);
+      setHasUnsavedChanges(false); // Datos cargados, resetear cambios
     } catch (err) {
-      setError('Error al cargar reserva');
+      Swal.fire('Error', 'No se pudo cargar la reserva', 'error');
     } finally {
       setLoading(false);
     }
@@ -182,20 +183,20 @@ function ReservasEdit({ user, onLogout }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setHasUnsavedChanges(true);
   };
 
   const handlePasajeroChange = (index, field, value) => {
     const newPasajeros = [...pasajeros];
     newPasajeros[index][field] = value;
     setPasajeros(newPasajeros);
+    setHasUnsavedChanges(true);
   };
 
   const handlePagoChange = (e) => {
     const { name, value } = e.target;
-    setPagoInicial(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setPagoInicial(prev => ({ ...prev, [name]: value }));
+    setHasUnsavedChanges(true);
   };
 
   const handlePaymentOptionChange = (option) => {
@@ -211,20 +212,51 @@ function ReservasEdit({ user, onLogout }) {
       tipo_pago: option,
       monto: monto
     }));
+    setHasUnsavedChanges(true);
   };
 
-  // --- WIZARD NAVIGATION ---
+  // 3. PROTECCIÓN AL SALIR
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      Swal.fire({
+        title: '¿Salir sin guardar?',
+        text: "Se perderán los datos de la reserva.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, salir',
+        cancelButtonText: 'Continuar'
+      }).then((result) => {
+        if (result.isConfirmed) navigate('/reservas');
+      });
+    } else {
+      navigate('/reservas');
+    }
+  };
+
+  // --- WIZARD NAVIGATION CON ALERTAS ---
   const nextStep = () => {
     if (step === 1) {
       if (!formData.cliente_id || !formData.paquete_id || !formData.cantidad_personas) {
-        setError('Por favor complete los campos obligatorios');
+        Swal.fire({
+          title: 'Datos incompletos',
+          text: 'Por favor seleccione Cliente, Paquete y Cantidad de Pasajeros.',
+          icon: 'warning',
+          confirmButtonText: 'Ok'
+        });
         return;
       }
     }
     if (step === 2) {
       const invalidPasajeros = pasajeros.some(p => !p.nombres || !p.apellidos);
       if (invalidPasajeros) {
-        setError('Por favor complete los nombres y apellidos de todos los pasajeros');
+        Swal.fire({
+          title: 'Datos de Pasajeros',
+          text: 'Por favor complete los nombres y apellidos de todos los pasajeros.',
+          icon: 'warning',
+          confirmButtonText: 'Ok'
+        });
         return;
       }
     }
@@ -234,7 +266,7 @@ function ReservasEdit({ user, onLogout }) {
 
   const prevStep = () => setStep(step - 1);
 
-  // --- SUBMIT (NUEVO) ---
+  // --- SUBMIT (NUEVO) CON SWEETALERT ---
   const handleSubmitNew = async () => {
     setLoading(true);
     setError('');
@@ -273,7 +305,6 @@ function ReservasEdit({ user, onLogout }) {
           await reservasService.addPasajero(reservaId, pasajeroData);
         }
       } catch (err) {
-        console.error('Error pasajeros:', err);
         throw new Error(`Error al guardar pasajeros: ${err.response?.data?.error || err.message}`);
       }
 
@@ -287,15 +318,24 @@ function ReservasEdit({ user, onLogout }) {
             notas: pagoInicial.tipo_pago === 'partial' ? 'Pago Inicial 30%' : 'Pago Total'
           });
         } catch (err) {
-          console.error('Error pago:', err);
           throw new Error(`Error al registrar el pago: ${err.response?.data?.error || err.message}`);
         }
       }
 
+      setHasUnsavedChanges(false);
+
+      await Swal.fire({
+        title: '¡Reserva Exitosa!',
+        text: 'La reserva y sus detalles se han registrado correctamente.',
+        icon: 'success',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Ir a Lista'
+      });
+
       navigate('/reservas');
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Error desconocido al procesar la reserva');
+      Swal.fire('Error', err.message || 'Error desconocido al procesar la reserva', 'error');
     } finally {
       setLoading(false);
     }
@@ -307,17 +347,20 @@ function ReservasEdit({ user, onLogout }) {
     setLoading(true);
     try {
       await reservasService.update(id, formData);
+      setHasUnsavedChanges(false);
+      
       Swal.fire({
         icon: 'success',
-        title: 'Reserva actualizada',
-        text: 'El estado de la reserva se ha actualizado correctamente.',
-        timer: 2000,
+        title: 'Actualizado',
+        text: 'El estado de la reserva se ha actualizado.',
+        timer: 1500,
         showConfirmButton: false
       });
+      
       fetchReservaCompleta();
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || 'Error al actualizar');
+      Swal.fire('Error', err.response?.data?.error || 'Error al actualizar', 'error');
     } finally {
       setLoading(false);
     }
@@ -341,9 +384,8 @@ function ReservasEdit({ user, onLogout }) {
     let tipoInicial = 'remaining';
     let montoInicial = saldoPendiente;
 
-    // Si no se ha pagado nada aún
     if (totalPagado === 0) {
-      tipoInicial = 'partial'; // Sugerir pago parcial por defecto
+      tipoInicial = 'partial';
       montoInicial = precioTotal * 0.30;
     }
 
@@ -406,9 +448,8 @@ function ReservasEdit({ user, onLogout }) {
         timer: 2000,
         showConfirmButton: false
       });
-      fetchReservaCompleta(); // Recargar datos
+      fetchReservaCompleta();
     } catch (err) {
-      console.error(err);
       Swal.fire({
         icon: 'error',
         title: 'Error',
@@ -670,7 +711,6 @@ function ReservasEdit({ user, onLogout }) {
 
       <div className="summary-card">
         <h3>Resumen Final</h3>
-        {/* 3. CORRECCIÓN: Usamos parseInt para evitar el error de eqeqeq y comparar id(num) con id(str) */}
         <p><strong>Paquete:</strong> {paquetes.find(p => p.id === parseInt(formData.paquete_id))?.nombre}</p>
         <p><strong>Pasajeros:</strong> {formData.cantidad_personas}</p>
         <p><strong>Total Reserva:</strong> S/. {formData.precio_total}</p>
@@ -703,7 +743,6 @@ function ReservasEdit({ user, onLogout }) {
         <button type="submit" className="btn-submit">Actualizar Estado</button>
       </form>
 
-      {/* Botón para registrar pago si hay saldo pendiente */}
       {(() => {
         const totalPagado = pagosLista.reduce((acc, p) => acc + (p.estado === 'completado' ? parseFloat(p.monto) : 0), 0);
         const precioTotal = parseFloat(formData.precio_total);
@@ -724,7 +763,6 @@ function ReservasEdit({ user, onLogout }) {
         return null;
       })()}
 
-      {/* MODAL DE PAGO */}
       {showPaymentModal && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -770,9 +808,6 @@ function ReservasEdit({ user, onLogout }) {
                 name="monto"
                 value={paymentModalData.monto}
                 onChange={handlePaymentModalChange}
-              // Si es 'remaining' o 'partial' calculado, quizás queramos dejarlo editable o no. 
-              // El usuario pidió "hacer el pago total o parcial", asumimos montos fijos o editables?
-              // Dejaremos editable pero pre-llenado.
               />
             </div>
 
@@ -843,7 +878,8 @@ function ReservasEdit({ user, onLogout }) {
 
   return (
     <div className="container">
-      <button className="btn-back" onClick={() => navigate('/reservas')}>
+      {/* BOTÓN VOLVER PROTEGIDO */}
+      <button className="btn-back" onClick={handleCancel}>
         <ArrowLeft size={20} /> Volver
       </button>
 

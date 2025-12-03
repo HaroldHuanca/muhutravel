@@ -4,9 +4,13 @@ import { proveedoresService } from '../services/api';
 import { ArrowLeft } from 'lucide-react';
 import './EditPage.css';
 
+// 1. IMPORTAMOS SWEETALERT2
+import Swal from 'sweetalert2';
+
 function ProveedoresEdit({ user, onLogout }) {
   const navigate = useNavigate();
   const { id } = useParams();
+  
   const [formData, setFormData] = useState({
     nombre: '',
     tipo: '',
@@ -16,13 +20,18 @@ function ProveedoresEdit({ user, onLogout }) {
     ciudad: '',
     activo: true,
   });
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // 2. ESTADO PARA DETECTAR CAMBIOS SIN GUARDAR
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchProveedor();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchProveedor = async () => {
@@ -30,8 +39,11 @@ function ProveedoresEdit({ user, onLogout }) {
     try {
       const response = await proveedoresService.getById(id);
       setFormData(response.data);
+      // Al cargar, no hay cambios pendientes
+      setHasUnsavedChanges(false);
     } catch (err) {
       setError('Error al cargar proveedor');
+      Swal.fire('Error', 'No se pudieron cargar los datos del proveedor', 'error');
     } finally {
       setLoading(false);
     }
@@ -43,11 +55,48 @@ function ProveedoresEdit({ user, onLogout }) {
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
+    // Marcamos que hubo cambios
+    setHasUnsavedChanges(true);
   };
 
+  // 3. FUNCIÓN PARA PROTEGER LA SALIDA
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      Swal.fire({
+        title: '¿Salir sin guardar?',
+        text: "Tienes cambios pendientes que se perderán.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, salir',
+        cancelButtonText: 'Continuar editando'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/proveedores');
+        }
+      });
+    } else {
+      navigate('/proveedores');
+    }
+  };
+
+  // 4. SUBMIT CON VALIDACIÓN Y ALERTAS
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Validación manual
+    if (!formData.nombre) {
+      Swal.fire({
+        title: 'Campos incompletos',
+        text: 'Por favor ingresa el Nombre del proveedor.',
+        icon: 'warning',
+        confirmButtonText: 'Entendido'
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -56,9 +105,33 @@ function ProveedoresEdit({ user, onLogout }) {
       } else {
         await proveedoresService.create(formData);
       }
+
+      // Reseteamos bandera de cambios
+      setHasUnsavedChanges(false);
+
+      // Alerta de Éxito
+      await Swal.fire({
+        title: '¡Operación Exitosa!',
+        text: id ? 'El proveedor ha sido actualizado correctamente.' : 'El nuevo proveedor ha sido registrado correctamente.',
+        icon: 'success',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Aceptar'
+      });
+
       navigate('/proveedores');
+
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al guardar proveedor');
+      const errorMsg = err.response?.data?.error || 'Error al guardar proveedor';
+      setError(errorMsg);
+      
+      // Alerta de Error
+      Swal.fire({
+        title: 'Error',
+        text: errorMsg,
+        icon: 'error',
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Cerrar'
+      });
     } finally {
       setLoading(false);
     }
@@ -66,7 +139,8 @@ function ProveedoresEdit({ user, onLogout }) {
 
   return (
     <div className="container">
-      <button className="btn-back" onClick={() => navigate('/proveedores')}>
+      {/* Botón Volver protegido */}
+      <button className="btn-back" onClick={handleCancel}>
         <ArrowLeft size={20} />
         Volver
       </button>
@@ -90,7 +164,7 @@ function ProveedoresEdit({ user, onLogout }) {
                 name="nombre"
                 value={formData.nombre}
                 onChange={handleChange}
-                required
+                // Quitamos required para usar la alerta personalizada
                 placeholder="Ingrese nombre del proveedor"
               />
             </div>
@@ -174,9 +248,11 @@ function ProveedoresEdit({ user, onLogout }) {
         </div>
 
         <div className="form-actions">
-          <button type="button" className="btn-cancel" onClick={() => navigate('/proveedores')}>
+          {/* Botón Cancelar protegido */}
+          <button type="button" className="btn-cancel" onClick={handleCancel}>
             Cancelar
           </button>
+          
           <button type="submit" className="btn-submit" disabled={loading}>
             {loading ? 'Guardando...' : 'Guardar Proveedor'}
           </button>

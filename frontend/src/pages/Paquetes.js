@@ -8,6 +8,9 @@ import { PDFViewer } from '@react-pdf/renderer';
 import ReporteGenericoPDF from '../components/ReporteGenericoPDF';
 import './ListPage.css';
 
+// 1. IMPORTAMOS SWEETALERT2
+import Swal from 'sweetalert2';
+
 function Paquetes({ user, onLogout }) {
   const navigate = useNavigate();
   
@@ -40,15 +43,44 @@ function Paquetes({ user, onLogout }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Está seguro de que desea eliminar este paquete?')) {
-      try {
-        await paquetesService.delete(id);
-        fetchPaquetes();
-      } catch (err) {
-        alert('Error al eliminar paquete');
+  // 2. FUNCIÓN HANDLE DELETE CON SWEETALERT
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "No podrás revertir esta acción. El paquete pasará a inactivos.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6', // Azul
+      cancelButtonColor: '#d33',     // Rojo
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          await paquetesService.delete(id);
+          
+          // Alerta de éxito
+          Swal.fire(
+            '¡Eliminado!',
+            'El paquete turístico ha sido eliminado correctamente.',
+            'success'
+          );
+          
+          fetchPaquetes();
+        } catch (err) {
+          console.error(err);
+          // Alerta de error
+          Swal.fire(
+            'Error',
+            'No se pudo eliminar el paquete. Verifique si tiene reservas futuras asociadas.',
+            'error'
+          );
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    });
   };
 
   // --- LÓGICA DE FILTRADO (COMBINADA) ---

@@ -120,13 +120,13 @@ router.get('/reservas-pendientes', verifyToken, async (req, res) => {
   try {
     const query = `
       SELECT 
-        r.id, r.numero_reserva, r.fecha_reserva, r.precio_total as monto_pendiente,
+        r.id, r.numero_reserva, r.fecha_reserva,r.estado, r.precio_total as monto_pendiente,
         c.nombres as cliente_nombres, c.apellidos as cliente_apellidos,
         p.nombre as paquete_nombre
       FROM reservas r
       JOIN clientes c ON r.cliente_id = c.id
       JOIN paquetes p ON r.paquete_id = p.id
-      WHERE r.estado = 'pendiente_pago'
+      WHERE r.estado = 'pendiente'
       ORDER BY r.fecha_reserva ASC
     `;
 

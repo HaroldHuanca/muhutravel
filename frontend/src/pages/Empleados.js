@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import Table from '../components/Table';
-import { empleadosService } from '../services/api'; // Asegúrate de tener este servicio
+import { empleadosService } from '../services/api'; 
 // Iconos
 import { Plus, Eye, Printer, X } from 'lucide-react';
 // PDF
 import { PDFViewer } from '@react-pdf/renderer';
 import ReporteGenericoPDF from '../components/ReporteGenericoPDF';
 import './ListPage.css';
+
+// 1. IMPORTAMOS SWEETALERT2
+import Swal from 'sweetalert2';
 
 function Empleados({ user, onLogout }) {
   const navigate = useNavigate();
@@ -41,15 +44,45 @@ function Empleados({ user, onLogout }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Está seguro de que desea eliminar este empleado?')) {
-      try {
-        await empleadosService.delete(id);
-        fetchEmpleados();
-      } catch (err) {
-        alert('Error al eliminar empleado');
+  // 2. FUNCIÓN HANDLE DELETE CON SWEETALERT
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "No podrás revertir esta acción. El empleado pasará a inactivos.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6', // Azul
+      cancelButtonColor: '#d33',     // Rojo
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          await empleadosService.delete(id);
+          
+          // Alerta de éxito
+          Swal.fire(
+            '¡Eliminado!',
+            'El empleado ha sido eliminado correctamente.',
+            'success'
+          );
+          
+          // Recargamos la lista
+          fetchEmpleados();
+        } catch (err) {
+          console.error(err);
+          // Alerta de error
+          Swal.fire(
+            'Error',
+            'No se pudo eliminar el empleado. Verifique si tiene ventas asociadas.',
+            'error'
+          );
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    });
   };
 
   // --- LÓGICA DE FILTRADO (FRONTEND) ---
@@ -69,7 +102,7 @@ function Empleados({ user, onLogout }) {
     { key: 'apellidos', label: 'Apellidos' },
     { key: 'puesto', label: 'Puesto' },
     { key: 'email', label: 'Email' },
-    { key: 'telefono', label: 'Teléfono' }, // Asumiendo que esta columna existe en tu DB
+    { key: 'telefono', label: 'Teléfono' }, 
   ];
 
   // Estilos

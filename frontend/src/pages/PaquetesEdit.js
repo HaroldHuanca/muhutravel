@@ -4,6 +4,9 @@ import { paquetesService, proveedoresService, empleadosService } from '../servic
 import { ArrowLeft, ArrowRight, Check, Package, Users } from 'lucide-react';
 import './EditPage.css';
 
+// 1. IMPORTAMOS SWEETALERT2
+import Swal from 'sweetalert2';
+
 function PaquetesEdit({ user, onLogout }) {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -11,7 +14,9 @@ function PaquetesEdit({ user, onLogout }) {
   // Estados
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  
+  // 2. ESTADO PARA DETECTAR CAMBIOS
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -42,6 +47,7 @@ function PaquetesEdit({ user, onLogout }) {
     if (id) {
       fetchPaquete();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchProveedoresEmpleados = async () => {
@@ -67,12 +73,12 @@ function PaquetesEdit({ user, onLogout }) {
       if (data.fecha_fin) data.fecha_fin = data.fecha_fin.split('T')[0];
 
       setFormData(data);
-      // Si ya existe, saltar al paso 2 (o 3 si se quiere editar todo junto, pero paso 1 es tipo)
-      // Para editar, podríamos mostrar todo en una sola vista o mantener el wizard.
-      // Mantendremos wizard para consistencia, pero saltando selección de tipo si ya está definido.
+      setHasUnsavedChanges(false); // Datos cargados, sin cambios pendientes
+      
+      // Si editamos, saltamos la selección de tipo
       setStep(2);
     } catch (err) {
-      setError('Error al cargar paquete');
+      Swal.fire('Error', 'No se pudo cargar el paquete', 'error');
     } finally {
       setLoading(false);
     }
@@ -84,38 +90,68 @@ function PaquetesEdit({ user, onLogout }) {
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
     });
+    setHasUnsavedChanges(true); // Marcamos cambios
   };
 
   const handleTypeSelect = (type) => {
     setFormData({ ...formData, tipo: type });
+    setHasUnsavedChanges(true);
     setStep(2);
   };
 
+  // 3. PROTECCIÓN AL SALIR
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      Swal.fire({
+        title: '¿Salir sin guardar?',
+        text: "Perderás los datos ingresados.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, salir',
+        cancelButtonText: 'Continuar'
+      }).then((result) => {
+        if (result.isConfirmed) navigate('/paquetes');
+      });
+    } else {
+      navigate('/paquetes');
+    }
+  };
+
+  // 4. VALIDACIÓN DE NAVEGACIÓN (PASO 2 -> 3)
   const nextStep = () => {
-    // Validaciones paso 2
     if (step === 2) {
       if (!formData.nombre || !formData.destino || !formData.duracion_dias || !formData.fecha_inicio || !formData.fecha_fin) {
-        setError('Por favor complete los campos obligatorios del paso 2');
+        Swal.fire({
+          title: 'Datos incompletos',
+          text: 'Por favor complete los campos obligatorios del Paso 2 (Nombre, Destino, Fechas, Duración).',
+          icon: 'warning',
+          confirmButtonText: 'Entendido'
+        });
         return;
       }
     }
-    setError('');
     setStep(step + 1);
   };
 
   const prevStep = () => setStep(step - 1);
 
+  // 5. SUBMIT CON VALIDACIÓN FINAL Y ALERTAS
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
-      // Validaciones finales específicas por tipo
+      // Validaciones finales según el tipo
       if (formData.tipo === 'REGULAR') {
-        if (!formData.precio || !formData.cupos) throw new Error('Precio y Cupos son obligatorios para tours regulares');
+        if (!formData.precio || !formData.cupos) {
+          throw new Error('Debe ingresar el Precio por Persona y los Cupos Máximos.');
+        }
       } else {
-        if (!formData.precio_grupo) throw new Error('Precio por grupo es obligatorio para tours privados');
+        if (!formData.precio_grupo) {
+          throw new Error('Debe ingresar el Precio por Grupo.');
+        }
       }
 
       if (id) {
@@ -123,9 +159,27 @@ function PaquetesEdit({ user, onLogout }) {
       } else {
         await paquetesService.create(formData);
       }
+
+      setHasUnsavedChanges(false);
+
+      await Swal.fire({
+        title: '¡Paquete Guardado!',
+        text: id ? 'El paquete se actualizó correctamente.' : 'El nuevo paquete ha sido creado.',
+        icon: 'success',
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Aceptar'
+      });
+
       navigate('/paquetes');
+
     } catch (err) {
-      setError(err.message || err.response?.data?.error || 'Error al guardar paquete');
+      const msg = err.message || err.response?.data?.error || 'Error al guardar paquete';
+      Swal.fire({
+        title: 'Faltan datos',
+        text: msg,
+        icon: 'warning', // Usamos warning si es validación, error si es de servidor
+        confirmButtonText: 'Revisar'
+      });
     } finally {
       setLoading(false);
     }
@@ -163,11 +217,11 @@ function PaquetesEdit({ user, onLogout }) {
       <div className="form-row">
         <div className="form-group">
           <label>Nombre del Tour *</label>
-          <input name="nombre" value={formData.nombre} onChange={handleChange} required />
+          <input name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Ej: Machu Picchu Full Day" />
         </div>
         <div className="form-group">
           <label>Destino *</label>
-          <input name="destino" value={formData.destino} onChange={handleChange} required />
+          <input name="destino" value={formData.destino} onChange={handleChange} placeholder="Ej: Cusco" />
         </div>
       </div>
       <div className="form-group">
@@ -177,15 +231,15 @@ function PaquetesEdit({ user, onLogout }) {
       <div className="form-row">
         <div className="form-group">
           <label>Duración (días) *</label>
-          <input type="number" name="duracion_dias" value={formData.duracion_dias} onChange={handleChange} required />
+          <input type="number" name="duracion_dias" value={formData.duracion_dias} onChange={handleChange} />
         </div>
         <div className="form-group">
           <label>Fecha Inicio *</label>
-          <input type="date" name="fecha_inicio" value={formData.fecha_inicio} onChange={handleChange} required />
+          <input type="date" name="fecha_inicio" value={formData.fecha_inicio} onChange={handleChange} />
         </div>
         <div className="form-group">
           <label>Fecha Fin *</label>
-          <input type="date" name="fecha_fin" value={formData.fecha_fin} onChange={handleChange} required />
+          <input type="date" name="fecha_fin" value={formData.fecha_fin} onChange={handleChange} />
         </div>
       </div>
       <div className="form-row">
@@ -215,15 +269,15 @@ function PaquetesEdit({ user, onLogout }) {
         <div className="form-row">
           <div className="form-group">
             <label>Precio por Persona *</label>
-            <input type="number" name="precio" value={formData.precio} onChange={handleChange} step="0.01" required />
+            <input type="number" name="precio" value={formData.precio} onChange={handleChange} step="0.01" placeholder="0.00" />
           </div>
           <div className="form-group">
             <label>Cupos Máximos *</label>
-            <input type="number" name="cupos" value={formData.cupos} onChange={handleChange} required />
+            <input type="number" name="cupos" value={formData.cupos} onChange={handleChange} placeholder="Ej: 20" />
           </div>
           <div className="form-group">
             <label>Cupo Mínimo</label>
-            <input type="number" name="min_cupos" value={formData.min_cupos} onChange={handleChange} />
+            <input type="number" name="min_cupos" value={formData.min_cupos} onChange={handleChange} placeholder="Ej: 1" />
           </div>
         </div>
       ) : (
@@ -231,7 +285,7 @@ function PaquetesEdit({ user, onLogout }) {
           <div className="form-row">
             <div className="form-group">
               <label>Precio por Grupo *</label>
-              <input type="number" name="precio_grupo" value={formData.precio_grupo} onChange={handleChange} step="0.01" required />
+              <input type="number" name="precio_grupo" value={formData.precio_grupo} onChange={handleChange} step="0.01" placeholder="0.00" />
             </div>
             <div className="form-group">
               <label>Máx. Pasajeros Rec.</label>
@@ -259,7 +313,8 @@ function PaquetesEdit({ user, onLogout }) {
 
   return (
     <div className="container">
-      <button className="btn-back" onClick={() => navigate('/paquetes')}>
+      {/* Botón protegido */}
+      <button className="btn-back" onClick={handleCancel}>
         <ArrowLeft size={20} /> Volver
       </button>
 
@@ -269,8 +324,6 @@ function PaquetesEdit({ user, onLogout }) {
           <div className={`step-indicator ${step >= 2 ? 'active' : ''}`}>2. Datos Básicos</div>
           <div className={`step-indicator ${step >= 3 ? 'active' : ''}`}>3. Detalles</div>
         </div>
-
-        {error && <div className="error-message">{error}</div>}
 
         <div className="wizard-content">
           {step === 1 && renderStep1()}
@@ -285,7 +338,7 @@ function PaquetesEdit({ user, onLogout }) {
             </button>
           )}
           {step < 3 ? (
-            step === 1 ? null : ( // En paso 1 se avanza al seleccionar tarjeta
+            step === 1 ? null : ( 
               <button className="btn-primary" onClick={nextStep}>
                 Siguiente <ArrowRight size={16} />
               </button>
