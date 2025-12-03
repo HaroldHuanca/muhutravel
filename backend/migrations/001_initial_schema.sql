@@ -156,4 +156,3 @@ CREATE INDEX idx_reservas_paquete ON reservas(paquete_id);
 CREATE INDEX idx_paquetes_destino ON paquetes(destino);
 CREATE INDEX idx_pasajeros_reserva ON pasajeros(reserva_id);
 CREATE INDEX idx_pagos_reserva ON pagos(reserva_id);
-
