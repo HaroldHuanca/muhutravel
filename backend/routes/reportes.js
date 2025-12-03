@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/ventas', verifyToken, async (req, res) => {
   try {
     const { startDate, endDate, status } = req.query;
-    
+
     let query = `
       SELECT 
         r.id, r.numero_reserva, r.fecha_reserva, r.precio_total, r.estado,
@@ -19,7 +19,7 @@ router.get('/ventas', verifyToken, async (req, res) => {
       JOIN paquetes p ON r.paquete_id = p.id
       WHERE 1=1
     `;
-    
+
     const params = [];
     let paramIndex = 1;
 
@@ -64,7 +64,7 @@ router.get('/paquetes-populares', verifyToken, async (req, res) => {
       GROUP BY p.id, p.nombre
       ORDER BY total_reservas DESC
     `;
-    
+
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
@@ -77,7 +77,7 @@ router.get('/paquetes-populares', verifyToken, async (req, res) => {
 router.get('/clientes', verifyToken, async (req, res) => {
   try {
     const { minSpent, country } = req.query;
-    
+
     let query = `
       SELECT 
         c.id, c.nombres, c.apellidos, c.pais, c.email,
@@ -87,7 +87,7 @@ router.get('/clientes', verifyToken, async (req, res) => {
       LEFT JOIN reservas r ON c.id = r.cliente_id
       WHERE 1=1
     `;
-    
+
     const params = [];
     let paramIndex = 1;
 
@@ -126,10 +126,10 @@ router.get('/reservas-pendientes', verifyToken, async (req, res) => {
       FROM reservas r
       JOIN clientes c ON r.cliente_id = c.id
       JOIN paquetes p ON r.paquete_id = p.id
-      WHERE r.estado = 'pendiente'
+      WHERE r.estado = 'pendiente_pago'
       ORDER BY r.fecha_reserva ASC
     `;
-    
+
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (err) {
