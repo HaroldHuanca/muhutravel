@@ -55,7 +55,7 @@ function Comunicacion({ user, onLogout }) {
   const cargarClientes = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get('http://localhost:5000/api/clientes', {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -94,7 +94,7 @@ function Comunicacion({ user, onLogout }) {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
 
       // Simular conexión con WhatsApp API
       const nombreCompleto = `${selectedCliente.nombres || ''} ${selectedCliente.apellidos || ''}`.trim();
@@ -130,7 +130,7 @@ function Comunicacion({ user, onLogout }) {
     if (!selectedCliente) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(
         `http://localhost:5000/api/comunicacion/mensajes/${selectedCliente.id}`,
         {
@@ -148,7 +148,7 @@ function Comunicacion({ user, onLogout }) {
     if (!selectedCliente) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const response = await axios.get(
         `http://localhost:5000/api/comunicacion/mensajes/${selectedCliente.id}`,
         {
@@ -194,7 +194,7 @@ function Comunicacion({ user, onLogout }) {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
 
       const response = await axios.post(
         'http://localhost:5000/api/comunicacion/enviar',
