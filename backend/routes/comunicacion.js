@@ -2,16 +2,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const db = require('../db');
-
-// Middleware para verificar autenticación
-const verificarToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ error: 'Token no proporcionado' });
-  }
-  // En producción, verificar el token JWT aquí
-  next();
-};
+const { verifyToken } = require('../middleware/auth');
 
 // Verificar configuración de whapi
 const verificarWhapiConfig = () => {
@@ -23,7 +14,7 @@ const verificarWhapiConfig = () => {
 };
 
 // Conectar con cliente (simular conexión WhatsApp)
-router.post('/conectar', verificarToken, async (req, res) => {
+router.post('/conectar', verifyToken, async (req, res) => {
   try {
     const { clienteId, telefono, nombre } = req.body;
 
@@ -54,7 +45,7 @@ router.post('/conectar', verificarToken, async (req, res) => {
 });
 
 // Enviar mensaje
-router.post('/enviar', verificarToken, async (req, res) => {
+router.post('/enviar', verifyToken, async (req, res) => {
   try {
     const { clienteId, telefono, mensaje, remitente } = req.body;
 
@@ -149,7 +140,7 @@ router.post('/enviar', verificarToken, async (req, res) => {
 });
 
 // Obtener mensajes de un cliente
-router.get('/mensajes/:clienteId', verificarToken, async (req, res) => {
+router.get('/mensajes/:clienteId', verifyToken, async (req, res) => {
   try {
     const { clienteId } = req.params;
 
