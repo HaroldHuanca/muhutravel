@@ -106,9 +106,7 @@ function Comunicacion({ user, onLogout }) {
     setSuccess('');
 
     // Si ya está conectado (automáticamente), cargar mensajes
-    if (whapiConfigured) {
-      setTimeout(() => cargarMensajes(), 100);
-    }
+    // El useEffect se encargará de cargar los mensajes cuando cambie el cliente
   };
 
   const cargarPlantillas = async () => {
