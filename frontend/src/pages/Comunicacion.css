@@ -163,6 +163,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -231,6 +232,7 @@
     transform: translateY(-10px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -436,6 +438,7 @@
 
 /* Formulario de Envío */
 .message-form {
+  position: relative;
   display: flex;
   gap: 8px;
   padding: 16px;
