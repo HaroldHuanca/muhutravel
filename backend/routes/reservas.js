@@ -464,6 +464,36 @@ router.delete('/:id/pasajeros/:pid', verifyToken, async (req, res) => {
 
 // ============ RUTAS PARA PAGOS ============
 
+const { enviarMensaje } = require('../services/whatsappService');
+
+// ... (existing imports)
+
+// Helper para enviar mensaje de confirmación
+const enviarConfirmacionReserva = async (reservaId, clienteId) => {
+  try {
+    // Obtener datos del cliente y reserva
+    const resData = await pool.query(`
+      SELECT c.telefono, c.nombres, p.nombre as paquete_nombre, r.fecha_reserva, r.numero_reserva
+      FROM reservas r
+      JOIN clientes c ON r.cliente_id = c.id
+      JOIN paquetes p ON r.paquete_id = p.id
+      WHERE r.id = $1
+    `, [reservaId]);
+
+    if (resData.rows.length > 0) {
+      const { telefono, nombres, paquete_nombre, numero_reserva } = resData.rows[0];
+      if (telefono) {
+        const mensaje = `¡Hola ${nombres}! 👋 Tu reserva *${numero_reserva}* para el tour *${paquete_nombre}* ha sido CONFIRMADA. 🎉 Estamos emocionados de tenerte con nosotros.`;
+        await enviarMensaje(clienteId, telefono, mensaje);
+      }
+    }
+  } catch (error) {
+    console.error('Error al enviar mensaje automático de confirmación:', error);
+  }
+};
+
+// ... (existing code)
+
 // Registrar pago
 router.post('/:id/pagos', verifyToken, async (req, res) => {
   const client = await pool.connect();
@@ -478,7 +508,7 @@ router.post('/:id/pagos', verifyToken, async (req, res) => {
     );
 
     // Verificar si se debe actualizar el estado de la reserva
-    const reservaRes = await client.query('SELECT precio_total, estado FROM reservas WHERE id = $1', [reserva_id]);
+    const reservaRes = await client.query('SELECT precio_total, estado, cliente_id FROM reservas WHERE id = $1', [reserva_id]);
     const reserva = reservaRes.rows[0];
 
     if (reserva.estado === 'pendiente_pago') {
@@ -503,6 +533,10 @@ router.post('/:id/pagos', verifyToken, async (req, res) => {
           'INSERT INTO historial_reservas (reserva_id, estado_anterior, estado_nuevo, usuario_id, comentario) VALUES ($1, $2, $3, $4, $5)',
           [reserva_id, 'pendiente_pago', 'confirmada', usuario_id || req.user?.id, 'Confirmación automática por pago mínimo (30%)']
         );
+
+        // ENVIAR MENSAJE AUTOMÁTICO (Fuera de la transacción para no bloquear)
+        // Lo hacemos asíncrono sin await para no demorar la respuesta
+        enviarConfirmacionReserva(reserva_id, reserva.cliente_id);
       }
     }
 
@@ -516,6 +550,9 @@ router.post('/:id/pagos', verifyToken, async (req, res) => {
     client.release();
   }
 });
+
+// ... (rest of the file)
+
 
 // Actualizar estado de pago (ej. anular)
 router.put('/:id/pagos/:pid', verifyToken, async (req, res) => {

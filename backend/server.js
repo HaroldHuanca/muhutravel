@@ -2,11 +2,13 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const { startCleanupJob } = require('./cron/reservationCleanup');
+const { startReminderJob } = require('./cron/reminders');
 
 const app = express();
 
 // Start background jobs
 startCleanupJob();
+startReminderJob();
 
 // Middleware
 app.use(cors());

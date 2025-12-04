@@ -4,31 +4,7 @@ const axios = require('axios');
 const db = require('../db');
 const { verifyToken } = require('../middleware/auth');
 
-// Función auxiliar para obtener token (DB o ENV)
-const obtenerWhapiToken = async () => {
-  try {
-    // 1. Buscar en DB
-    const result = await db.query('SELECT valor FROM configuracion WHERE clave = $1', ['WHAPI_TOKEN']);
-    if (result.rows.length > 0 && result.rows[0].valor) {
-      return result.rows[0].valor;
-    }
-    // 2. Fallback a ENV
-    return process.env.WHAPI_TOKEN || null;
-  } catch (err) {
-    console.error('Error al obtener token:', err);
-    return process.env.WHAPI_TOKEN || null;
-  }
-};
-
-// Verificar configuración de whapi
-const verificarWhapiConfig = async () => {
-  const token = await obtenerWhapiToken();
-  if (!token) {
-    console.warn('⚠️ WHAPI_TOKEN no configurado en DB ni .env');
-    return false;
-  }
-  return true;
-};
+const { enviarMensaje, obtenerWhapiToken, verificarWhapiConfig } = require('../services/whatsappService');
 
 // Obtener estado del servicio
 router.get('/status', verifyToken, async (req, res) => {
@@ -43,10 +19,6 @@ router.get('/status', verifyToken, async (req, res) => {
 router.post('/config', verifyToken, async (req, res) => {
   try {
     const { token } = req.body;
-
-    // Verificar permisos (simple check, idealmente middleware)
-    // Asumimos que el frontend controla acceso, pero validamos aquí también si es crítico
-    // En este caso, confiamos en que solo admin ve la opción, pero podríamos validar req.user.rol
 
     await db.query(
       'INSERT INTO configuracion (clave, valor, descripcion) VALUES ($1, $2, $3) ON CONFLICT (clave) DO UPDATE SET valor = $2, actualizado_en = NOW()',
@@ -68,10 +40,6 @@ router.post('/conectar', verifyToken, async (req, res) => {
     if (!clienteId || !telefono) {
       return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
-
-    // Aquí se integraría con la API de whapi
-    // Por ahora, simular la conexión
-    console.log(`Conectando con cliente: ${nombre} (${telefono})`);
 
     // Guardar la conexión en la base de datos
     await db.query(
@@ -100,95 +68,23 @@ router.post('/enviar', verifyToken, async (req, res) => {
       return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
 
-    // Normalizar número de teléfono (remover caracteres especiales)
-    let numeroLimpio = telefono.replace(/\D/g, '');
+    const result = await enviarMensaje(clienteId, telefono, mensaje, 'usuario');
 
-    // Si tiene 9 dígitos (formato Perú sin código), agregar 51
-    if (numeroLimpio.length === 9) {
-      numeroLimpio = '51' + numeroLimpio;
-    }
+    res.json({
+      success: true,
+      message: 'Mensaje enviado correctamente',
+      messageId: result.messageId,
+      clienteId,
+      timestamp: new Date().toISOString(),
+      whapi: result.whapi
+    });
 
-    console.log(`📤 Intentando enviar mensaje a ${numeroLimpio}: ${mensaje}`);
-
-    // Intentar enviar con whapi si está configurado
-    if (await verificarWhapiConfig()) {
-      try {
-        const token = await obtenerWhapiToken();
-        let whapiUrl = process.env.WHAPI_API_URL || 'https://gate.whapi.cloud';
-        // Remover barra diagonal final si existe
-        whapiUrl = whapiUrl.replace(/\/$/, '');
-        const fullUrl = `${whapiUrl}/messages/text`;
-
-        console.log(`📍 URL de whapi: ${fullUrl}`);
-        console.log(`🔑 Token: ${token.substring(0, 10)}...`);
-
-        const response = await axios.post(
-          fullUrl,
-          {
-            to: numeroLimpio,
-            body: mensaje
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            timeout: 15000
-          }
-        );
-
-        console.log('✅ Mensaje enviado exitosamente a través de whapi:', response.data);
-
-        // Guardar mensaje en la base de datos
-        const messageId = response.data.message?.id || response.data.result?.id || `msg_${Date.now()}`;
-        try {
-          await db.query(
-            'INSERT INTO comunicacion_mensajes (cliente_id, mensaje, remitente, tipo, estado, whapi_message_id) VALUES ($1, $2, $3, $4, $5, $6)',
-            [clienteId, mensaje, 'usuario', 'enviado', 'sent', messageId]
-          );
-          console.log('💾 Mensaje guardado en BD');
-        } catch (dbError) {
-          console.error('⚠️ Error al guardar mensaje en BD:', dbError.message);
-          // No fallar la respuesta si falla la BD
-        }
-
-        res.json({
-          success: true,
-          message: 'Mensaje enviado correctamente',
-          messageId: messageId,
-          clienteId,
-          timestamp: new Date().toISOString(),
-          whapi: true
-        });
-      } catch (whapiError) {
-        console.error('❌ Error de whapi:');
-        console.error('Status:', whapiError.response?.status);
-        console.error('Data:', whapiError.response?.data);
-        console.error('Message:', whapiError.message);
-
-        // Si falla whapi, retornar error
-        return res.status(500).json({
-          error: 'Error al enviar mensaje a través de WhatsApp',
-          details: whapiError.response?.data?.error || whapiError.message,
-          status: whapiError.response?.status
-        });
-      }
-    } else {
-      // Sin whapi configurado, simular
-      console.log(`⚠️ Simulando envío a ${numeroLimpio}: ${mensaje}`);
-
-      res.json({
-        success: true,
-        message: 'Mensaje simulado (whapi no configurado)',
-        messageId: `msg_${Date.now()}`,
-        clienteId,
-        timestamp: new Date().toISOString(),
-        simulated: true
-      });
-    }
   } catch (error) {
     console.error('Error al enviar mensaje:', error);
-    res.status(500).json({ error: 'Error al enviar mensaje' });
+    res.status(500).json({
+      error: 'Error al enviar mensaje',
+      details: error.message
+    });
   }
 });
 

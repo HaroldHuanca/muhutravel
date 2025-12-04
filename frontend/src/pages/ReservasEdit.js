@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { reservasService, clientesService, paquetesService, empleadosService } from '../services/api';
 import { ArrowLeft, ArrowRight, Check, DollarSign, Users, Briefcase } from 'lucide-react';
 import './EditPage.css';
+import MiniChat from '../components/MiniChat';
 
 // 1. IMPORTAMOS SWEETALERT2
 import Swal from 'sweetalert2';
@@ -22,7 +23,7 @@ function ReservasEdit({ user, onLogout }) {
 
   // Estado para Wizard (Solo Nuevo)
   const [step, setStep] = useState(1);
-  const [viewType, setViewType] = useState('REGULAR'); 
+  const [viewType, setViewType] = useState('REGULAR');
 
   // 2. ESTADO PARA DETECTAR CAMBIOS SIN GUARDAR
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -348,7 +349,7 @@ function ReservasEdit({ user, onLogout }) {
     try {
       await reservasService.update(id, formData);
       setHasUnsavedChanges(false);
-      
+
       Swal.fire({
         icon: 'success',
         title: 'Actualizado',
@@ -356,7 +357,7 @@ function ReservasEdit({ user, onLogout }) {
         timer: 1500,
         showConfirmButton: false
       });
-      
+
       fetchReservaCompleta();
     } catch (err) {
       console.error(err);
@@ -510,7 +511,7 @@ function ReservasEdit({ user, onLogout }) {
               })}
           </select>
         </div>
-      </div>
+      </div >
       <div className="form-row">
         <div className="form-group">
           <label>Cantidad Pasajeros *</label>
@@ -603,7 +604,7 @@ function ReservasEdit({ user, onLogout }) {
           />
         </div>
       </div>
-    </div>
+    </div >
   );
 
   const renderStep2 = () => (
@@ -877,20 +878,25 @@ function ReservasEdit({ user, onLogout }) {
   );
 
   return (
-    <div className="container">
-      {/* BOTÓN VOLVER PROTEGIDO */}
-      <button className="btn-back" onClick={handleCancel}>
-        <ArrowLeft size={20} /> Volver
-      </button>
+    <div className="edit-page">
+      <div className="page-header">
+        <button className="btn-back" onClick={handleCancel}>
+          <ArrowLeft size={20} />
+          <span>Volver</span>
+        </button>
+        <h1>{isNew ? 'Nueva Reserva' : `Reserva ${formData.numero_reserva}`}</h1>
+      </div>
 
       {error && <div className="error-message">{error}</div>}
 
       {isNew ? (
         <div className="wizard-container">
           <div className="wizard-progress">
-            <div className={`step-indicator ${step >= 1 ? 'active' : ''}`}>1. Datos</div>
-            <div className={`step-indicator ${step >= 2 ? 'active' : ''}`}>2. Pasajeros</div>
-            <div className={`step-indicator ${step >= 3 ? 'active' : ''}`}>3. Pago</div>
+            <div className={`step-indicator ${step >= 1 ? 'active' : ''}`}>1</div>
+            <div className="step-line"></div>
+            <div className={`step-indicator ${step >= 2 ? 'active' : ''}`}>2</div>
+            <div className="step-line"></div>
+            <div className={`step-indicator ${step >= 3 ? 'active' : ''}`}>3</div>
           </div>
 
           <div className="wizard-content">
@@ -902,7 +908,7 @@ function ReservasEdit({ user, onLogout }) {
           <div className="wizard-actions">
             {step > 1 && (
               <button className="btn-secondary" onClick={prevStep}>
-                Atrás
+                <ArrowLeft size={16} /> Anterior
               </button>
             )}
             {step < 3 ? (
@@ -911,13 +917,27 @@ function ReservasEdit({ user, onLogout }) {
               </button>
             ) : (
               <button className="btn-success" onClick={handleSubmitNew} disabled={loading}>
-                {loading ? 'Procesando...' : 'Finalizar Reserva'} <Check size={16} />
+                {loading ? 'Guardando...' : 'Confirmar Reserva'}
               </button>
             )}
           </div>
         </div>
       ) : (
-        renderEditView()
+        <>
+          {renderEditView()}
+          {/* Mini Chat Widget - Solo en edición y si hay cliente */}
+          {formData.cliente_id && (
+            <MiniChat
+              clienteId={formData.cliente_id}
+              clienteNombre={
+                clientes.find(c => c.id === formData.cliente_id)
+                  ? `${clientes.find(c => c.id === formData.cliente_id).nombres} ${clientes.find(c => c.id === formData.cliente_id).apellidos}`
+                  : 'Cliente'
+              }
+              telefono={clientes.find(c => c.id === formData.cliente_id)?.telefono}
+            />
+          )}
+        </>
       )}
     </div>
   );
