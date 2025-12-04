@@ -111,8 +111,8 @@ router.post('/', verifyToken, async (req, res) => {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
       [
         nombre, destino, duracion_dias, precio || 0, cupos || 1, min_cupos || 1, tipo || 'REGULAR',
-        descripcion, precio_grupo, max_pasajeros_recomendado, precio_adicional_persona,
-        fecha_inicio, fecha_fin, proveedor_id, empleado_id
+        descripcion, precio_grupo || null, max_pasajeros_recomendado || null, precio_adicional_persona || null,
+        fecha_inicio, fecha_fin, proveedor_id || null, empleado_id || null
       ]
     );
 
@@ -140,8 +140,8 @@ router.put('/:id', verifyToken, async (req, res) => {
        WHERE id = $17 RETURNING *`,
       [
         nombre, destino, duracion_dias, precio, cupos, min_cupos, tipo,
-        descripcion, precio_grupo, max_pasajeros_recomendado, precio_adicional_persona,
-        fecha_inicio, fecha_fin, proveedor_id, empleado_id, activo, req.params.id
+        descripcion, precio_grupo || null, max_pasajeros_recomendado || null, precio_adicional_persona || null,
+        fecha_inicio, fecha_fin, proveedor_id || null, empleado_id || null, activo, req.params.id
       ]
     );
 
