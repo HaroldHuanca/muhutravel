@@ -192,9 +192,9 @@ router.post('/', verifyToken, async (req, res) => {
     await client.query('BEGIN');
     const { numero_reserva, cliente_id, paquete_id, empleado_id, cantidad_personas, precio_total, estado, comentario } = req.body;
 
-    if (!numero_reserva || !cliente_id || !paquete_id || !cantidad_personas || precio_total === undefined) {
+    if (!cliente_id || !paquete_id || !cantidad_personas || precio_total === undefined) {
       await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'Campos requeridos: numero_reserva, cliente_id, paquete_id, cantidad_personas, precio_total' });
+      return res.status(400).json({ error: 'Campos requeridos: cliente_id, paquete_id, cantidad_personas, precio_total' });
     }
 
     // 1. Validar Deuda del Cliente
@@ -329,9 +329,29 @@ router.post('/', verifyToken, async (req, res) => {
     // 4. Crear Reserva
     const estadoInicial = estado || 'borrador'; // Por defecto borrador
 
+    // --- AUTO-INCREMENTO DE ID ---
+    // Obtener el último ID
+    const lastReserva = await client.query('SELECT numero_reserva FROM reservas ORDER BY id DESC LIMIT 1');
+    let nuevoNumeroReserva = 'RES-001';
+
+    if (lastReserva.rows.length > 0) {
+      const lastId = lastReserva.rows[0].numero_reserva;
+      // Extraer la parte numérica (asumiendo formato RES-XXX)
+      const parts = lastId.split('-');
+      if (parts.length === 2) {
+        const numberPart = parseInt(parts[1]);
+        if (!isNaN(numberPart)) {
+          const nextNumber = numberPart + 1;
+          // Formatear con ceros a la izquierda (3 dígitos)
+          nuevoNumeroReserva = `RES-${nextNumber.toString().padStart(3, '0')}`;
+        }
+      }
+    }
+    // -----------------------------
+
     const result = await client.query(
       'INSERT INTO reservas (numero_reserva, cliente_id, paquete_id, empleado_id, cantidad_personas, precio_total, estado, comentario) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [numero_reserva, cliente_id, paquete_id, empleado_id, cantidad_personas, precio_total, estadoInicial, comentario]
+      [nuevoNumeroReserva, cliente_id, paquete_id, empleado_id, cantidad_personas, precio_total, estadoInicial, comentario]
     );
 
     // Registrar historial inicial

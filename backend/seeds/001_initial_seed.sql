@@ -102,26 +102,26 @@ VALUES
 
 INSERT INTO reservas (numero_reserva, cliente_id, paquete_id, empleado_id, cantidad_personas, precio_total, estado, comentario, fecha_reserva)
 VALUES
-('RES-001', 1, 1, 1, 2, 700.00, 'confirmada', 'Pago adelantado 50%', NOW()),
-('RES-002', 2, 2, 2, 1, 120.00, 'pendiente_pago', 'Confirmar hotel', NOW()),
-('RES-003', 3, 3, 3, 3, 300.00, 'en_servicio', 'Vegetarianos', NOW()),
-('RES-004', 4, 4, 4, 2, 220.00, 'cancelada', 'Problemas de salud', NOW()),
-('RES-005', 5, 5, 5, 4, 240.00, 'completada', 'Recojo del aeropuerto', NOW()),
-('RES-006', 6, 6, 6, 1, 650.00, 'pendiente_pago', 'Verificar disponibilidad Camino Inca', NOW()),
-('RES-007', 7, 7, 2, 2, 1100.00, 'confirmada', 'Luna de miel', NOW()),
-('RES-008', 8, 8, 6, 1, 450.00, 'en_servicio', 'Mochilero', NOW()),
-('RES-009', 9, 9, 1, 2, 160.00, 'pendiente_pago', 'Pago pendiente', NOW()),
-('RES-010', 10, 10, 3, 3, 210.00, 'completada', 'Familia con niños', NOW()),
-('RES-011', 11, 11, 5, 2, 800.00, 'confirmada', 'Hotel 5 estrellas', NOW()),
-('RES-012', 12, 12, 2, 1, 700.00, 'pendiente_pago', 'Consulta por equipo de camping', NOW()),
-('RES-013', 13, 13, 4, 2, 120.00, 'confirmada', 'Asientos ventana', NOW()),
-('RES-014', 14, 14, 6, 1, 90.00, 'cancelada', 'Vuelo cancelado', NOW()),
-('RES-015', 15, 15, 2, 2, 200.00, 'en_servicio', 'Amigos', NOW()),
-('RES-016', 16, 1, 1, 1, 350.00, 'pendiente_pago', 'Solo tour', NOW()),
-('RES-017', 17, 2, 2, 2, 240.00, 'confirmada', 'Aniversario', NOW()),
-('RES-018', 18, 3, 3, 1, 100.00, 'completada', 'Fotografo', NOW()),
-('RES-019', 19, 4, 4, 2, 220.00, 'pendiente_pago', 'Duda sobre altura', NOW()),
-('RES-020', 20, 5, 5, 3, 180.00, 'confirmada', 'Grupo de estudiantes', NOW());
+('RES-001', 1, 1, 1, 2, 700.00, 'confirmada', 'Pago adelantado 50%', '2025-05-01 10:00:00'),
+('RES-002', 2, 2, 2, 1, 120.00, 'pendiente_pago', 'Confirmar hotel', '2025-05-12 11:30:00'),
+('RES-003', 3, 3, 3, 3, 300.00, 'en_servicio', 'Vegetarianos', '2025-05-24 09:15:00'),
+('RES-004', 4, 4, 4, 2, 220.00, 'cancelada', 'Problemas de salud', '2025-06-05 14:20:00'),
+('RES-005', 5, 5, 5, 4, 240.00, 'completada', 'Recojo del aeropuerto', '2025-06-17 16:45:00'),
+('RES-006', 6, 6, 6, 1, 650.00, 'pendiente_pago', 'Verificar disponibilidad Camino Inca', '2025-06-29 10:10:00'),
+('RES-007', 7, 7, 2, 2, 1100.00, 'confirmada', 'Luna de miel', '2025-07-11 12:00:00'),
+('RES-008', 8, 8, 6, 1, 450.00, 'en_servicio', 'Mochilero', '2025-07-23 08:30:00'),
+('RES-009', 9, 9, 1, 2, 160.00, 'pendiente_pago', 'Pago pendiente', '2025-08-04 15:00:00'),
+('RES-010', 10, 10, 3, 3, 210.00, 'completada', 'Familia con niños', '2025-08-16 11:00:00'),
+('RES-011', 11, 11, 5, 2, 800.00, 'confirmada', 'Hotel 5 estrellas', '2025-08-28 09:00:00'),
+('RES-012', 12, 12, 2, 1, 700.00, 'pendiente_pago', 'Consulta por equipo de camping', '2025-09-09 13:30:00'),
+('RES-013', 13, 13, 4, 2, 120.00, 'confirmada', 'Asientos ventana', '2025-09-21 10:45:00'),
+('RES-014', 14, 14, 6, 1, 90.00, 'cancelada', 'Vuelo cancelado', '2025-10-03 17:00:00'),
+('RES-015', 15, 15, 2, 2, 200.00, 'en_servicio', 'Amigos', '2025-10-15 12:15:00'),
+('RES-016', 16, 1, 1, 1, 350.00, 'pendiente_pago', 'Solo tour', '2025-10-27 09:30:00'),
+('RES-017', 17, 2, 2, 2, 240.00, 'confirmada', 'Aniversario', '2025-11-08 14:00:00'),
+('RES-018', 18, 3, 3, 1, 100.00, 'completada', 'Fotografo', '2025-11-20 11:20:00'),
+('RES-019', 19, 4, 4, 2, 220.00, 'pendiente_pago', 'Duda sobre altura', '2025-12-02 10:00:00'),
+('RES-020', 20, 5, 5, 3, 180.00, 'confirmada', 'Grupo de estudiantes', '2025-12-24 09:00:00');
 
 INSERT INTO reserva_proveedores (reserva_id, proveedor_id, tipo_servicio, costo, notas, creado_en)
 VALUES
@@ -161,11 +161,15 @@ VALUES
 
 INSERT INTO pagos (reserva_id, monto, fecha_pago, metodo_pago, referencia, estado, registrado_por, notas)
 VALUES
-(1, 350.00, NOW(), 'Transferencia', 'OP-12345', 'completado', 1, 'Adelanto 50%'),
-(3, 300.00, NOW(), 'Tarjeta', 'TX-98765', 'completado', 2, 'Pago total'),
-(5, 240.00, NOW(), 'Efectivo', NULL, 'completado', 3, 'Pago en oficina'),
-(7, 500.00, NOW(), 'Yape', 'YP-112233', 'completado', 1, 'Adelanto'),
-(7, 600.00, NOW(), 'Plin', 'PL-445566', 'completado', 1, 'Saldo');
+(1, 350.00, '2025-05-01 10:05:00', 'Transferencia', 'OP-12345', 'completado', 1, 'Adelanto 50%'),
+(3, 300.00, '2025-05-24 09:20:00', 'Tarjeta', 'TX-98765', 'completado', 2, 'Pago total'),
+(5, 240.00, '2025-06-17 16:50:00', 'Efectivo', NULL, 'completado', 3, 'Pago en oficina'),
+(7, 500.00, '2025-07-11 12:05:00', 'Yape', 'YP-112233', 'completado', 1, 'Adelanto'),
+(7, 600.00, '2025-07-11 12:10:00', 'Plin', 'PL-445566', 'completado', 1, 'Saldo'),
+(8, 450.00, '2025-07-23 08:35:00', 'Transferencia', 'OP-88888', 'completado', 2, 'Pago total'),
+(10, 210.00, '2025-08-16 11:05:00', 'Efectivo', NULL, 'completado', 3, 'Pago total'),
+(15, 200.00, '2025-10-15 12:20:00', 'Tarjeta', 'TX-77777', 'completado', 2, 'Pago total'),
+(18, 100.00, '2025-11-20 11:25:00', 'Yape', 'YP-99999', 'completado', 3, 'Pago total');
 
 INSERT INTO historial_reservas (reserva_id, estado_anterior, estado_nuevo, fecha_cambio, usuario_id, comentario)
 VALUES
