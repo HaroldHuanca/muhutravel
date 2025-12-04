@@ -9,7 +9,7 @@ require('dotenv').config();
 const axios = require('axios');
 
 const WHAPI_TOKEN = process.env.WHAPI_TOKEN;
-const WHAPI_API_URL = process.env.WHAPI_API_URL || 'https://api.whapi.cloud';
+const WHAPI_API_URL = process.env.WHAPI_API_URL || 'https://gate.whapi.cloud';
 
 console.log('🧪 Iniciando prueba de whapi...\n');
 
@@ -27,12 +27,12 @@ console.log(`🔑 Token: ${WHAPI_TOKEN.substring(0, 10)}...\n`);
 // Números de prueba
 const NUMEROS_PRUEBA = [
   {
-    numero: '51984438516',
+    numero: '984438516',
     descripcion: 'Número principal (sincronizado en whapi)'
   },
   {
-    numero: '51930466769',
-    descripcion: 'Número alternativo'
+    numero: '994761559',
+    descripcion: 'Número Angelo (9 dígitos)'
   }
 ];
 
@@ -40,7 +40,7 @@ const NUMEROS_PRUEBA = [
 async function enviarMensajePrueba(numero, descripcion) {
   try {
     console.log(`\n📤 Enviando mensaje a ${numero} (${descripcion})...`);
-    
+
     const response = await axios.post(
       `${WHAPI_API_URL}/messages/text`,
       {
@@ -61,7 +61,7 @@ async function enviarMensajePrueba(numero, descripcion) {
     return true;
   } catch (error) {
     console.error('❌ Error al enviar mensaje:');
-    
+
     if (error.response) {
       console.error(`Status: ${error.response.status}`);
       console.error(`Datos: ${JSON.stringify(error.response.data, null, 2)}`);
@@ -71,7 +71,7 @@ async function enviarMensajePrueba(numero, descripcion) {
     } else {
       console.error(error.message);
     }
-    
+
     return false;
   }
 }
@@ -80,7 +80,7 @@ async function enviarMensajePrueba(numero, descripcion) {
 async function verificarConfiguracion() {
   try {
     console.log('\n🔍 Verificando configuración de whapi...');
-    
+
     const response = await axios.get(
       `${WHAPI_API_URL}/settings`,
       {
@@ -117,7 +117,7 @@ async function ejecutarPruebas() {
     for (const { numero, descripcion } of NUMEROS_PRUEBA) {
       const exito = await enviarMensajePrueba(numero, descripcion);
       if (exito) enviados++;
-      
+
       // Esperar 2 segundos entre intentos
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
@@ -127,7 +127,7 @@ async function ejecutarPruebas() {
     console.log('📊 RESUMEN DE PRUEBAS');
     console.log('='.repeat(60));
     console.log(`✅ Mensajes enviados exitosamente: ${enviados}/${NUMEROS_PRUEBA.length}`);
-    
+
     if (enviados === NUMEROS_PRUEBA.length) {
       console.log('\n🎉 ¡Todas las pruebas fueron exitosas!');
       console.log('La integración con whapi está funcionando correctamente.');

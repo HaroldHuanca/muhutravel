@@ -27,7 +27,7 @@ if (!WHAPI_TOKEN) {
 
 if (!WHAPI_API_URL) {
   console.warn('⚠️ WHAPI_API_URL no está configurado, usando default');
-  console.log(`   URL por defecto: https://api.whapi.cloud`);
+  console.log(`   URL por defecto: https://gate.whapi.cloud`);
 } else {
   console.log(`✅ WHAPI_API_URL: ${WHAPI_API_URL}`);
 }
@@ -38,9 +38,9 @@ console.log('-'.repeat(60));
 
 async function verificarConectividad() {
   try {
-    const url = WHAPI_API_URL || 'https://api.whapi.cloud';
+    const url = WHAPI_API_URL || 'https://gate.whapi.cloud';
     console.log(`📡 Intentando conectar a: ${url}`);
-    
+
     const response = await axios.get(`${url}/settings`, {
       headers: {
         'Authorization': `Bearer ${WHAPI_TOKEN}`,
@@ -48,7 +48,7 @@ async function verificarConectividad() {
       },
       timeout: 10000
     });
-    
+
     console.log('✅ Conexión exitosa');
     console.log('📊 Configuración de whapi:');
     console.log(JSON.stringify(response.data, null, 2));
@@ -85,15 +85,15 @@ console.log('-'.repeat(60));
 
 async function simularEnvio() {
   try {
-    let url = WHAPI_API_URL || 'https://api.whapi.cloud';
+    let url = WHAPI_API_URL || 'https://gate.whapi.cloud';
     // Remover barra diagonal final si existe
     url = url.replace(/\/$/, '');
     const fullUrl = `${url}/messages/text`;
-    
+
     console.log(`📤 URL: ${fullUrl}`);
     console.log(`📱 Número: ${numeroLimpio}`);
     console.log(`💬 Mensaje: "Prueba de diagnóstico"`);
-    
+
     const response = await axios.post(
       fullUrl,
       {
@@ -108,7 +108,7 @@ async function simularEnvio() {
         timeout: 15000
       }
     );
-    
+
     console.log('✅ Mensaje enviado exitosamente');
     console.log('📊 Respuesta:');
     console.log(JSON.stringify(response.data, null, 2));
@@ -131,13 +131,13 @@ async function simularEnvio() {
 async function ejecutarDiagnostico() {
   try {
     const conectividadOk = await verificarConectividad();
-    
+
     if (conectividadOk) {
       console.log('\n5️⃣ ENVIANDO MENSAJE DE PRUEBA');
       console.log('-'.repeat(60));
       await simularEnvio();
     }
-    
+
     console.log('\n' + '='.repeat(60));
     console.log('✅ DIAGNÓSTICO COMPLETADO');
     console.log('='.repeat(60));

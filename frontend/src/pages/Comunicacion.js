@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import QRCode from 'qrcode.react';
-import { Send, Phone, MessageCircle, X, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import { Send, Phone, MessageCircle, X, CheckCircle, AlertCircle, Loader, FileText } from 'lucide-react';
 import './Comunicacion.css';
 
 function Comunicacion({ user, onLogout }) {
@@ -15,13 +15,19 @@ function Comunicacion({ user, onLogout }) {
   const [qrVisible, setQrVisible] = useState(false);
   const [conexionEstablecida, setConexionEstablecida] = useState(false);
   const [buscador, setBuscador] = useState('');
+  const [whapiConfigured, setWhapiConfigured] = useState(false);
+  const [newToken, setNewToken] = useState('');
+  const [plantillas, setPlantillas] = useState([]);
+  const [showPlantillas, setShowPlantillas] = useState(false);
   const messagesEndRef = useRef(null);
   const pollingIntervalRef = useRef(null);
   const lastMessageCountRef = useRef(0);
 
-  // Cargar clientes al montar el componente
+  // Cargar clientes y estado de whapi al montar
   useEffect(() => {
     cargarClientes();
+    checkWhapiStatus();
+    cargarPlantillas();
   }, []);
 
   // Auto-scroll al final de los mensajes
@@ -30,24 +36,50 @@ function Comunicacion({ user, onLogout }) {
   }, [mensajes]);
 
   // Polling automático para nuevos mensajes
-useEffect(() => {
-  if (selectedCliente && conexionEstablecida) {
-    cargarMensajes();
-    pollingIntervalRef.current = setInterval(() => {
-      cargarMensajesConDeteccion();
-    }, 2000);
+  useEffect(() => {
+    if (selectedCliente && conexionEstablecida) {
+      cargarMensajes();
+      pollingIntervalRef.current = setInterval(() => {
+        cargarMensajesConDeteccion();
+      }, 2000);
 
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [selectedCliente, conexionEstablecida]);
+      return () => {
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+        }
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCliente, conexionEstablecida]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const checkWhapiStatus = async () => {
+    try {
+      const response = await api.get('/comunicacion/status');
+      setWhapiConfigured(response.data.whapiConfigured);
+    } catch (err) {
+      console.error('Error al verificar estado de whapi:', err);
+    }
+  };
+
+  const guardarToken = async () => {
+    try {
+      setLoading(true);
+      const response = await api.post('/comunicacion/config', { token: newToken });
+      if (response.data.success) {
+        setSuccess('Token guardado y activado correctamente');
+        setWhapiConfigured(true);
+        setConexionEstablecida(true); // Auto-conectar
+        setTimeout(() => setSuccess(''), 3000);
+      }
+    } catch (err) {
+      setError('Error al guardar token: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const cargarClientes = async () => {
@@ -66,11 +98,36 @@ useEffect(() => {
   const seleccionarCliente = (cliente) => {
     setSelectedCliente(cliente);
     setMensajes([]);
-    setConexionEstablecida(false);
+    // Si whapi está configurado, conectar automáticamente
+    setConexionEstablecida(whapiConfigured);
     setQrVisible(false);
     setNuevoMensaje('');
     setError('');
     setSuccess('');
+
+    // Si ya está conectado (automáticamente), cargar mensajes
+    if (whapiConfigured) {
+      setTimeout(() => cargarMensajes(), 100);
+    }
+  };
+
+  const cargarPlantillas = async () => {
+    try {
+      const response = await api.get('/comunicacion/plantillas');
+      setPlantillas(response.data);
+    } catch (err) {
+      console.error('Error al cargar plantillas:', err);
+    }
+  };
+
+  const usarPlantilla = (plantilla) => {
+    if (!selectedCliente) return;
+
+    const nombreCliente = selectedCliente.nombres || selectedCliente.nombre || '';
+    const texto = plantilla.contenido.replace('{{nombre}}', nombreCliente.split(' ')[0]);
+
+    setNuevoMensaje(texto);
+    setShowPlantillas(false);
   };
 
   const generarQR = () => {
@@ -308,44 +365,68 @@ useEffect(() => {
                 </div>
               )}
 
-              {/* Sección de Conexión */}
+              {/* Sección de Conexión / Configuración */}
               {!conexionEstablecida ? (
                 <div className="connection-section">
                   <div className="connection-info">
                     <MessageCircle size={32} />
-                    <h4>Conectar con WhatsApp</h4>
-                    <p>Escanea el código QR o haz clic en conectar para iniciar la conversación</p>
+                    <h4>Configuración de WhatsApp</h4>
+
+                    {!whapiConfigured ? (
+                      user.rol === 'admin' ? (
+                        <div className="config-admin-panel">
+                          <p>El token de Whapi no está configurado. Ingrésalo para activar el servicio.</p>
+                          <div className="token-input-group">
+                            <input
+                              type="text"
+                              placeholder="Pegar WHAPI_TOKEN aquí..."
+                              value={newToken}
+                              onChange={(e) => setNewToken(e.target.value)}
+                              className="token-input"
+                            />
+                            <button
+                              className="btn btn-primary"
+                              onClick={guardarToken}
+                              disabled={loading || !newToken.trim()}
+                            >
+                              {loading ? 'Guardando...' : 'Guardar y Activar'}
+                            </button>
+                          </div>
+                          <p className="help-text">
+                            Obtén tu token en <a href="https://whapi.cloud" target="_blank" rel="noopener noreferrer">whapi.cloud</a>
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="config-user-message">
+                          <AlertCircle size={48} className="text-warning" />
+                          <p>El servicio de mensajería no está configurado.</p>
+                          <p className="sub-text">Por favor, contacte al administrador del sistema para activar la integración con WhatsApp.</p>
+                        </div>
+                      )
+                    ) : (
+                      <div className="connection-actions">
+                        <p>Servicio activo. Conectando...</p>
+                        <Loader className="spin" />
+                      </div>
+                    )}
                   </div>
 
-                  <div className="connection-actions">
-                    <button
-                      className="btn btn-primary"
-                      onClick={generarQR}
-                      disabled={loading}
-                    >
-                      Generar QR
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={establecerConexion}
-                      disabled={loading}
-                    >
-                      {loading ? 'Conectando...' : 'Conectar Directamente'}
-                    </button>
-                  </div>
+                  {/* Mantener opción de QR solo para admin si lo desea como fallback o testing */}
+                  {user.rol === 'admin' && !whapiConfigured && (
+                    <div className="qr-fallback">
+                      <button className="btn-link" onClick={() => setQrVisible(!qrVisible)}>
+                        {qrVisible ? 'Ocultar QR de prueba' : 'Mostrar QR de prueba (Simulación)'}
+                      </button>
 
-                  {qrVisible && (
-                    <div className="qr-container">
-                      <h5>Escanea este código QR</h5>
-                      <QRCode
-                        value={`https://wa.me/${selectedCliente.telefono.replace(/\D/g, '')}`}
-                        size={256}
-                        level="H"
-                        includeMargin={true}
-                      />
-                      <p className="qr-hint">
-                        Abre WhatsApp en tu teléfono y escanea este código
-                      </p>
+                      {qrVisible && (
+                        <div className="qr-container">
+                          <QRCode
+                            value={`https://wa.me/${selectedCliente.telefono.replace(/\D/g, '')}`}
+                            size={200}
+                          />
+                          <p>QR para pruebas locales</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -376,6 +457,33 @@ useEffect(() => {
 
                   {/* Formulario de Envío */}
                   <form className="message-form" onSubmit={enviarMensaje}>
+                    <button
+                      type="button"
+                      className="template-btn"
+                      onClick={() => setShowPlantillas(!showPlantillas)}
+                      title="Usar plantilla"
+                    >
+                      <FileText size={20} />
+                    </button>
+
+                    {showPlantillas && (
+                      <div className="templates-popup">
+                        <div className="templates-header">
+                          <h4>Plantillas</h4>
+                          <button type="button" onClick={() => setShowPlantillas(false)}><X size={16} /></button>
+                        </div>
+                        <div className="templates-list">
+                          {plantillas.map(p => (
+                            <div key={p.id} className="template-item" onClick={() => usarPlantilla(p)}>
+                              <strong>{p.nombre}</strong>
+                              <p>{p.contenido.substring(0, 50)}...</p>
+                            </div>
+                          ))}
+                          {plantillas.length === 0 && <p className="no-templates">No hay plantillas</p>}
+                        </div>
+                      </div>
+                    )}
+
                     <input
                       type="text"
                       placeholder="Escribe tu mensaje..."

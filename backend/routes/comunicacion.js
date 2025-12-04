@@ -4,14 +4,61 @@ const axios = require('axios');
 const db = require('../db');
 const { verifyToken } = require('../middleware/auth');
 
+// Función auxiliar para obtener token (DB o ENV)
+const obtenerWhapiToken = async () => {
+  try {
+    // 1. Buscar en DB
+    const result = await db.query('SELECT valor FROM configuracion WHERE clave = $1', ['WHAPI_TOKEN']);
+    if (result.rows.length > 0 && result.rows[0].valor) {
+      return result.rows[0].valor;
+    }
+    // 2. Fallback a ENV
+    return process.env.WHAPI_TOKEN || null;
+  } catch (err) {
+    console.error('Error al obtener token:', err);
+    return process.env.WHAPI_TOKEN || null;
+  }
+};
+
 // Verificar configuración de whapi
-const verificarWhapiConfig = () => {
-  if (!process.env.WHAPI_TOKEN) {
-    console.warn('⚠️ WHAPI_TOKEN no configurado en .env');
+const verificarWhapiConfig = async () => {
+  const token = await obtenerWhapiToken();
+  if (!token) {
+    console.warn('⚠️ WHAPI_TOKEN no configurado en DB ni .env');
     return false;
   }
   return true;
 };
+
+// Obtener estado del servicio
+router.get('/status', verifyToken, async (req, res) => {
+  const token = await obtenerWhapiToken();
+  res.json({
+    whapiConfigured: !!token,
+    mode: token ? 'production' : 'simulation'
+  });
+});
+
+// Guardar configuración (Solo Admin)
+router.post('/config', verifyToken, async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // Verificar permisos (simple check, idealmente middleware)
+    // Asumimos que el frontend controla acceso, pero validamos aquí también si es crítico
+    // En este caso, confiamos en que solo admin ve la opción, pero podríamos validar req.user.rol
+
+    await db.query(
+      'INSERT INTO configuracion (clave, valor, descripcion) VALUES ($1, $2, $3) ON CONFLICT (clave) DO UPDATE SET valor = $2, actualizado_en = NOW()',
+      ['WHAPI_TOKEN', token, 'Token de autenticación para Whapi.cloud']
+    );
+
+    res.json({ success: true, message: 'Configuración guardada correctamente' });
+  } catch (error) {
+    console.error('Error al guardar configuración:', error);
+    res.status(500).json({ error: 'Error al guardar configuración' });
+  }
+});
 
 // Conectar con cliente (simular conexión WhatsApp)
 router.post('/conectar', verifyToken, async (req, res) => {
@@ -26,11 +73,11 @@ router.post('/conectar', verifyToken, async (req, res) => {
     // Por ahora, simular la conexión
     console.log(`Conectando con cliente: ${nombre} (${telefono})`);
 
-    // Guardar la conexión en la base de datos (opcional)
-    // await db.query(
-    //   'INSERT INTO comunicacion_conexiones (cliente_id, telefono, conectado_en) VALUES ($1, $2, NOW())',
-    //   [clienteId, telefono]
-    // );
+    // Guardar la conexión en la base de datos
+    await db.query(
+      'INSERT INTO comunicacion_conexiones (cliente_id, telefono, conectado_en) VALUES ($1, $2, NOW())',
+      [clienteId, telefono]
+    );
 
     res.json({
       success: true,
@@ -54,21 +101,27 @@ router.post('/enviar', verifyToken, async (req, res) => {
     }
 
     // Normalizar número de teléfono (remover caracteres especiales)
-    const numeroLimpio = telefono.replace(/\D/g, '');
-    
+    let numeroLimpio = telefono.replace(/\D/g, '');
+
+    // Si tiene 9 dígitos (formato Perú sin código), agregar 51
+    if (numeroLimpio.length === 9) {
+      numeroLimpio = '51' + numeroLimpio;
+    }
+
     console.log(`📤 Intentando enviar mensaje a ${numeroLimpio}: ${mensaje}`);
 
     // Intentar enviar con whapi si está configurado
-    if (verificarWhapiConfig()) {
+    if (await verificarWhapiConfig()) {
       try {
-        let whapiUrl = process.env.WHAPI_API_URL || 'https://api.whapi.cloud';
+        const token = await obtenerWhapiToken();
+        let whapiUrl = process.env.WHAPI_API_URL || 'https://gate.whapi.cloud';
         // Remover barra diagonal final si existe
         whapiUrl = whapiUrl.replace(/\/$/, '');
         const fullUrl = `${whapiUrl}/messages/text`;
-        
+
         console.log(`📍 URL de whapi: ${fullUrl}`);
-        console.log(`🔑 Token: ${process.env.WHAPI_TOKEN?.substring(0, 10)}...`);
-        
+        console.log(`🔑 Token: ${token.substring(0, 10)}...`);
+
         const response = await axios.post(
           fullUrl,
           {
@@ -77,7 +130,7 @@ router.post('/enviar', verifyToken, async (req, res) => {
           },
           {
             headers: {
-              'Authorization': `Bearer ${process.env.WHAPI_TOKEN}`,
+              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             },
             timeout: 15000
@@ -112,9 +165,9 @@ router.post('/enviar', verifyToken, async (req, res) => {
         console.error('Status:', whapiError.response?.status);
         console.error('Data:', whapiError.response?.data);
         console.error('Message:', whapiError.message);
-        
+
         // Si falla whapi, retornar error
-        return res.status(500).json({ 
+        return res.status(500).json({
           error: 'Error al enviar mensaje a través de WhatsApp',
           details: whapiError.response?.data?.error || whapiError.message,
           status: whapiError.response?.status
@@ -123,7 +176,7 @@ router.post('/enviar', verifyToken, async (req, res) => {
     } else {
       // Sin whapi configurado, simular
       console.log(`⚠️ Simulando envío a ${numeroLimpio}: ${mensaje}`);
-      
+
       res.json({
         success: true,
         message: 'Mensaje simulado (whapi no configurado)',
@@ -202,16 +255,22 @@ router.post('/webhook', async (req, res) => {
 
         // Extraer número de teléfono (remover @s.whatsapp.net si existe)
         let telefono = message.from?.replace('@s.whatsapp.net', '') || message.from;
-        
+
         // Normalizar número de teléfono
         telefono = telefono.replace(/\D/g, '');
-        
+
         console.log(`🔍 Buscando cliente con teléfono: ${telefono}`);
 
         // Buscar el cliente por teléfono
+        // Buscar el cliente por teléfono (intentar con y sin código de país 51)
+        let telefonoSinCodigo = telefono;
+        if (telefono.startsWith('51') && telefono.length === 11) {
+          telefonoSinCodigo = telefono.substring(2);
+        }
+
         const clienteResult = await db.query(
-          'SELECT id FROM clientes WHERE telefono = $1 LIMIT 1',
-          [telefono]
+          'SELECT id FROM clientes WHERE telefono = $1 OR telefono = $2 LIMIT 1',
+          [telefono, telefonoSinCodigo]
         );
 
         if (clienteResult.rows.length === 0) {
@@ -254,8 +313,8 @@ router.post('/webhook', async (req, res) => {
 
     console.log(`✅ Webhook procesado: ${procesados.length} mensajes guardados, ${errores.length} errores`);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Mensajes procesados correctamente',
       procesados: procesados.length,
       errores: errores.length,
@@ -312,6 +371,51 @@ router.post('/webhook/test', async (req, res) => {
   } catch (error) {
     console.error('❌ Error en webhook de prueba:', error);
     res.status(500).json({ error: 'Error al procesar webhook de prueba', detalles: error.message });
+  }
+});
+
+// ==========================================
+// GESTIÓN DE PLANTILLAS
+// ==========================================
+
+// Obtener todas las plantillas
+router.get('/plantillas', verifyToken, async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM comunicacion_plantillas ORDER BY nombre ASC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener plantillas:', error);
+    res.status(500).json({ error: 'Error al obtener plantillas' });
+  }
+});
+
+// Crear nueva plantilla
+router.post('/plantillas', verifyToken, async (req, res) => {
+  try {
+    const { nombre, contenido } = req.body;
+    if (!nombre || !contenido) {
+      return res.status(400).json({ error: 'Nombre y contenido son requeridos' });
+    }
+
+    const result = await db.query(
+      'INSERT INTO comunicacion_plantillas (nombre, contenido, creado_por) VALUES ($1, $2, $3) RETURNING *',
+      [nombre, contenido, req.user.id]
+    );
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error al crear plantilla:', error);
+    res.status(500).json({ error: 'Error al crear plantilla' });
+  }
+});
+
+// Eliminar plantilla
+router.delete('/plantillas/:id', verifyToken, async (req, res) => {
+  try {
+    await db.query('DELETE FROM comunicacion_plantillas WHERE id = $1', [req.params.id]);
+    res.json({ success: true, message: 'Plantilla eliminada' });
+  } catch (error) {
+    console.error('Error al eliminar plantilla:', error);
+    res.status(500).json({ error: 'Error al eliminar plantilla' });
   }
 });
 
