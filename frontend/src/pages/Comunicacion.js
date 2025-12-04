@@ -53,10 +53,7 @@ useEffect(() => {
   const cargarClientes = async () => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('token');
-      const response = await api.get('http://localhost:5000/api/clientes', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/clientes');
       setClientes(response.data);
       setError('');
     } catch (err) {
@@ -92,7 +89,6 @@ useEffect(() => {
 
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('token');
 
       // Simular conexión con WhatsApp API
       const nombreCompleto = `${selectedCliente.nombres || ''} ${selectedCliente.apellidos || ''}`.trim();
@@ -125,13 +121,7 @@ useEffect(() => {
     if (!selectedCliente) return;
 
     try {
-      const token = sessionStorage.getItem('token');
-      const response = await api.get(
-        `http://localhost:5000/api/comunicacion/mensajes/${selectedCliente.id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      const response = await api.get(`/comunicacion/mensajes/${selectedCliente.id}`);
       setMensajes(response.data);
       lastMessageCountRef.current = response.data.length;
     } catch (err) {
@@ -143,13 +133,7 @@ useEffect(() => {
     if (!selectedCliente) return;
 
     try {
-      const token = sessionStorage.getItem('token');
-      const response = await api.get(
-        `http://localhost:5000/api/comunicacion/mensajes/${selectedCliente.id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      const response = await api.get(`/comunicacion/mensajes/${selectedCliente.id}`);
 
       // Solo actualizar si hay nuevos mensajes
       if (response.data.length > lastMessageCountRef.current) {
@@ -189,7 +173,6 @@ useEffect(() => {
 
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('token');
 
       const response = await api.post(
         '/comunicacion/enviar',
