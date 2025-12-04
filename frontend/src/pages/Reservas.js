@@ -8,6 +8,9 @@ import { PDFViewer } from '@react-pdf/renderer';
 import ReporteGenericoPDF from '../components/ReporteGenericoPDF';
 import './ListPage.css';
 
+// 1. IMPORTAMOS SWEETALERT2
+import Swal from 'sweetalert2';
+
 function Reservas({ user, onLogout }) {
   const navigate = useNavigate();
   
@@ -29,7 +32,6 @@ function Reservas({ user, onLogout }) {
   const fetchReservas = async () => {
     setLoading(true);
     try {
-      // La búsqueda de texto sigue yendo al backend
       const response = await reservasService.getAll(search);
       setReservas(response.data);
     } catch (err) {
@@ -39,15 +41,44 @@ function Reservas({ user, onLogout }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Está seguro de que desea eliminar esta reserva?')) {
-      try {
-        await reservasService.delete(id);
-        fetchReservas();
-      } catch (err) {
-        alert('Error al eliminar reserva');
+  // 2. FUNCIÓN HANDLE DELETE CON SWEETALERT
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "No podrás revertir esta acción. La reserva será eliminada permanentemente.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6', // Azul
+      cancelButtonColor: '#d33',     // Rojo
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          await reservasService.delete(id);
+          
+          // Alerta de éxito
+          Swal.fire(
+            '¡Eliminado!',
+            'La reserva ha sido eliminada.',
+            'success'
+          );
+          
+          fetchReservas();
+        } catch (err) {
+          console.error(err);
+          // Alerta de error
+          Swal.fire(
+            'Error',
+            'No se pudo eliminar la reserva. Intente nuevamente.',
+            'error'
+          );
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    });
   };
 
   // --- LÓGICA DE FILTRADO (FRONTEND) ---
@@ -223,7 +254,7 @@ function Reservas({ user, onLogout }) {
             )}
           </div>
 
-          {/* --- TABLA MANUAL (Para mantener tus botones personalizados) --- */}
+          {/* --- TABLA MANUAL --- */}
           {loading ? (
             <div className="table-loading">Cargando datos...</div>
           ) : reservasFiltradas.length === 0 ? (
@@ -240,7 +271,6 @@ function Reservas({ user, onLogout }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {/* IMPORTANTE: Mapeamos reservasFiltradas, no reservas */}
                   {reservasFiltradas.map((row, idx) => (
                     <tr key={row.id || idx}>
                       {columns.map((col) => (

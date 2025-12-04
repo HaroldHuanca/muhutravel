@@ -9,6 +9,9 @@ import { PDFViewer } from '@react-pdf/renderer';
 import ReporteGenericoPDF from '../components/ReporteGenericoPDF';
 import './ListPage.css';
 
+// 1. IMPORTAMOS SWEETALERT2
+import Swal from 'sweetalert2';
+
 function Proveedores({ user, onLogout }) {
   const navigate = useNavigate();
 
@@ -42,15 +45,44 @@ function Proveedores({ user, onLogout }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Está seguro de que desea eliminar este proveedor?')) {
-      try {
-        await proveedoresService.delete(id);
-        fetchProveedores();
-      } catch (err) {
-        alert('Error al eliminar proveedor');
+  // 2. FUNCIÓN HANDLE DELETE CON SWEETALERT
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "No podrás revertir esta acción. El proveedor pasará a inactivos.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6', // Azul
+      cancelButtonColor: '#d33',     // Rojo
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          await proveedoresService.delete(id);
+          
+          // Alerta de éxito
+          Swal.fire(
+            '¡Eliminado!',
+            'El proveedor ha sido eliminado correctamente.',
+            'success'
+          );
+          
+          fetchProveedores();
+        } catch (err) {
+          console.error(err);
+          // Alerta de error
+          Swal.fire(
+            'Error',
+            'No se pudo eliminar el proveedor. Verifique que no tenga paquetes asociados.',
+            'error'
+          );
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    });
   };
 
   // --- LÓGICA DE FILTRADO (FRONTEND) ---
