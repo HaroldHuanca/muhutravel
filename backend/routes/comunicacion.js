@@ -3,6 +3,11 @@ const router = express.Router();
 const axios = require('axios');
 const db = require('../db');
 
+// Obtener io desde app.locals cuando se usa el router
+const getIo = (req) => {
+  return req.app.locals.io;
+};
+
 // Middleware para verificar autenticación
 const verificarToken = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -62,89 +67,33 @@ router.post('/enviar', verificarToken, async (req, res) => {
       return res.status(400).json({ error: 'Faltan datos requeridos' });
     }
 
-    // Normalizar número de teléfono (remover caracteres especiales)
-    const numeroLimpio = telefono.replace(/\D/g, '');
-    
-    console.log(`📤 Intentando enviar mensaje a ${numeroLimpio}: ${mensaje}`);
+    const whatsappIntegration = req.app.locals.whatsappIntegration;
+    const io = getIo(req);
 
-    // Intentar enviar con whapi si está configurado
-    if (verificarWhapiConfig()) {
-      try {
-        let whapiUrl = process.env.WHAPI_API_URL || 'https://api.whapi.cloud';
-        // Remover barra diagonal final si existe
-        whapiUrl = whapiUrl.replace(/\/$/, '');
-        const fullUrl = `${whapiUrl}/messages/text`;
-        
-        console.log(`📍 URL de whapi: ${fullUrl}`);
-        console.log(`🔑 Token: ${process.env.WHAPI_TOKEN?.substring(0, 10)}...`);
-        
-        const response = await axios.post(
-          fullUrl,
-          {
-            to: numeroLimpio,
-            body: mensaje
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${process.env.WHAPI_TOKEN}`,
-              'Content-Type': 'application/json'
-            },
-            timeout: 15000
-          }
-        );
+    // Usar servicio de integración para enviar mensaje
+    const result = await whatsappIntegration.enviarMensaje(
+      telefono,
+      mensaje,
+      clienteId,
+      remitente || 'usuario'
+    );
 
-        console.log('✅ Mensaje enviado exitosamente a través de whapi:', response.data);
+    console.log('✅ Mensaje enviado correctamente:', result);
 
-        // Guardar mensaje en la base de datos
-        const messageId = response.data.message?.id || response.data.result?.id || `msg_${Date.now()}`;
-        try {
-          await db.query(
-            'INSERT INTO comunicacion_mensajes (cliente_id, mensaje, remitente, tipo, estado, whapi_message_id) VALUES ($1, $2, $3, $4, $5, $6)',
-            [clienteId, mensaje, 'usuario', 'enviado', 'sent', messageId]
-          );
-          console.log('💾 Mensaje guardado en BD');
-        } catch (dbError) {
-          console.error('⚠️ Error al guardar mensaje en BD:', dbError.message);
-          // No fallar la respuesta si falla la BD
-        }
-
-        res.json({
-          success: true,
-          message: 'Mensaje enviado correctamente',
-          messageId: messageId,
-          clienteId,
-          timestamp: new Date().toISOString(),
-          whapi: true
-        });
-      } catch (whapiError) {
-        console.error('❌ Error de whapi:');
-        console.error('Status:', whapiError.response?.status);
-        console.error('Data:', whapiError.response?.data);
-        console.error('Message:', whapiError.message);
-        
-        // Si falla whapi, retornar error
-        return res.status(500).json({ 
-          error: 'Error al enviar mensaje a través de WhatsApp',
-          details: whapiError.response?.data?.error || whapiError.message,
-          status: whapiError.response?.status
-        });
-      }
-    } else {
-      // Sin whapi configurado, simular
-      console.log(`⚠️ Simulando envío a ${numeroLimpio}: ${mensaje}`);
-      
-      res.json({
-        success: true,
-        message: 'Mensaje simulado (whapi no configurado)',
-        messageId: `msg_${Date.now()}`,
-        clienteId,
-        timestamp: new Date().toISOString(),
-        simulated: true
-      });
-    }
+    res.json({
+      success: true,
+      message: 'Mensaje enviado correctamente',
+      messageId: result.messageId,
+      clienteId,
+      timestamp: new Date().toISOString(),
+      provider: result.provider
+    });
   } catch (error) {
     console.error('Error al enviar mensaje:', error);
-    res.status(500).json({ error: 'Error al enviar mensaje' });
+    res.status(500).json({ 
+      error: 'Error al enviar mensaje',
+      detalles: error.message
+    });
   }
 });
 
@@ -152,24 +101,22 @@ router.post('/enviar', verificarToken, async (req, res) => {
 router.get('/mensajes/:clienteId', verificarToken, async (req, res) => {
   try {
     const { clienteId } = req.params;
+    const whatsappIntegration = req.app.locals.whatsappIntegration;
 
-    // Obtener mensajes de la base de datos
-    const result = await db.query(
-      'SELECT id, mensaje, remitente, tipo, estado, creado_en FROM comunicacion_mensajes WHERE cliente_id = $1 ORDER BY creado_en ASC',
-      [clienteId]
-    );
+    // Usar servicio de integración para obtener historial
+    const mensajes = await whatsappIntegration.obtenerHistorial(clienteId);
 
     // Formatear mensajes para el frontend
-    const mensajes = result.rows.map(msg => ({
+    const mensajesFormateados = mensajes.map(msg => ({
       id: msg.id,
-      texto: msg.mensaje,
+      texto: msg.texto,
       remitente: msg.remitente === 'usuario' ? 'Yo' : msg.remitente,
-      timestamp: new Date(msg.creado_en).toLocaleTimeString('es-PE'),
+      timestamp: new Date(msg.timestamp).toLocaleTimeString('es-PE'),
       tipo: msg.tipo,
       estado: msg.estado
     }));
 
-    res.json(mensajes);
+    res.json(mensajesFormateados);
   } catch (error) {
     console.error('Error al obtener mensajes:', error);
     res.status(500).json({ error: 'Error al obtener mensajes' });
@@ -180,6 +127,7 @@ router.get('/mensajes/:clienteId', verificarToken, async (req, res) => {
 router.post('/webhook', async (req, res) => {
   try {
     const { messages } = req.body;
+    const whatsappIntegration = req.app.locals.whatsappIntegration;
 
     console.log('📨 Webhook recibido:', JSON.stringify(req.body, null, 2));
 
@@ -193,7 +141,7 @@ router.post('/webhook', async (req, res) => {
     const procesados = [];
     const errores = [];
 
-    // Procesar cada mensaje recibido
+    // Procesar cada mensaje recibido usando el servicio de integración
     for (const message of messages) {
       try {
         console.log('📩 Procesando mensaje:', {
@@ -209,52 +157,12 @@ router.post('/webhook', async (req, res) => {
           continue;
         }
 
-        // Extraer número de teléfono (remover @s.whatsapp.net si existe)
-        let telefono = message.from?.replace('@s.whatsapp.net', '') || message.from;
-        
-        // Normalizar número de teléfono
-        telefono = telefono.replace(/\D/g, '');
-        
-        console.log(`🔍 Buscando cliente con teléfono: ${telefono}`);
+        // Usar servicio de integración para procesar el mensaje
+        const result = await whatsappIntegration.procesarMensajeRecibido(message);
 
-        // Buscar el cliente por teléfono
-        const clienteResult = await db.query(
-          'SELECT id FROM clientes WHERE telefono = $1 LIMIT 1',
-          [telefono]
-        );
-
-        if (clienteResult.rows.length === 0) {
-          console.warn(`⚠️ Cliente no encontrado para teléfono: ${telefono}`);
-          errores.push({ telefono, razon: 'Cliente no encontrado' });
-          continue;
+        if (result) {
+          procesados.push(result);
         }
-
-        const clienteId = clienteResult.rows[0].id;
-        console.log(`✅ Cliente encontrado: ${clienteId}`);
-
-        // Verificar si el mensaje ya existe
-        const existeResult = await db.query(
-          'SELECT id FROM comunicacion_mensajes WHERE whapi_message_id = $1',
-          [message.id]
-        );
-
-        if (existeResult.rows.length > 0) {
-          console.log(`⚠️ Mensaje duplicado, saltando: ${message.id}`);
-          continue;
-        }
-
-        // Guardar el mensaje en la base de datos
-        const insertResult = await db.query(
-          'INSERT INTO comunicacion_mensajes (cliente_id, mensaje, remitente, tipo, estado, whapi_message_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-          [clienteId, message.body, telefono, 'recibido', 'delivered', message.id]
-        );
-
-        console.log(`✅ Mensaje guardado en BD: ${insertResult.rows[0].id}`);
-        procesados.push({
-          clienteId,
-          messageId: message.id,
-          dbId: insertResult.rows[0].id
-        });
       } catch (msgError) {
         console.error('❌ Error procesando mensaje individual:', msgError);
         errores.push({ error: msgError.message });
