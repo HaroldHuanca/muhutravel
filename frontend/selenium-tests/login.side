@@ -1,0 +1,133 @@
+{
+  "id": "login-tests",
+  "version": "2.0",
+  "name": "Login Tests",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "login-successful",
+      "name": "Login Successful",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/login",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "id=username",
+          "value": "5000"
+        },
+        {
+          "command": "type",
+          "target": "id=username",
+          "value": "admin"
+        },
+        {
+          "command": "type",
+          "target": "id=password",
+          "value": "hash123"
+        },
+        {
+          "command": "click",
+          "target": "css=button.login-btn",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.dashboard-container",
+          "value": "5000"
+        },
+        {
+          "command": "assertTitle",
+          "target": "",
+          "value": "MuhuTravel"
+        }
+      ]
+    },
+    {
+      "id": "login-invalid-credentials",
+      "name": "Login Invalid Credentials",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/login",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "id=username",
+          "value": "5000"
+        },
+        {
+          "command": "type",
+          "target": "id=username",
+          "value": "invalid_user"
+        },
+        {
+          "command": "type",
+          "target": "id=password",
+          "value": "wrong_password"
+        },
+        {
+          "command": "click",
+          "target": "css=button.login-btn",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.error-message",
+          "value": "5000"
+        },
+        {
+          "command": "assertText",
+          "target": "css=.error-message",
+          "value": "*Error*"
+        }
+      ]
+    },
+    {
+      "id": "login-empty-fields",
+      "name": "Login Empty Fields",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/login",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=button.login-btn",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=button.login-btn",
+          "value": ""
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "id=username:invalid",
+          "value": ""
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "login-suite",
+      "name": "Login Test Suite",
+      "parallel": false,
+      "persistSession": false,
+      "tests": [
+        "login-successful",
+        "login-invalid-credentials",
+        "login-empty-fields"
+      ]
+    }
+  ],
+  "urls": [
+    "http://localhost:3000/"
+  ],
+  "plugins": []
+}

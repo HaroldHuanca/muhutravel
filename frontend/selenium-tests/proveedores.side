@@ -1,0 +1,130 @@
+{
+  "id": "proveedores-tests",
+  "version": "2.0",
+  "name": "Proveedores Tests",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "proveedores-list-load",
+      "name": "Proveedores List Loads",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/proveedores",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.list-container",
+          "value": "5000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=.table-container",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "proveedores-search",
+      "name": "Proveedores Search Functionality",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/proveedores",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=input[placeholder*='Buscar']",
+          "value": "5000"
+        },
+        {
+          "command": "type",
+          "target": "css=input[placeholder*='Buscar']",
+          "value": "Hotel"
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.table-container tbody tr",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "proveedores-add-button",
+      "name": "Proveedores Add Button",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/proveedores",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=button:has-text('Agregar')",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=button:has-text('Agregar')",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.edit-container",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "proveedores-edit",
+      "name": "Proveedores Edit Provider",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/proveedores",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.table-container tbody tr:first-child",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=.table-container tbody tr:first-child td:last-child button",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.edit-container",
+          "value": "3000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=input[name='nombre']",
+          "value": ""
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "proveedores-suite",
+      "name": "Proveedores Test Suite",
+      "parallel": false,
+      "persistSession": false,
+      "tests": [
+        "proveedores-list-load",
+        "proveedores-search",
+        "proveedores-add-button",
+        "proveedores-edit"
+      ]
+    }
+  ],
+  "urls": [
+    "http://localhost:3000/"
+  ],
+  "plugins": []
+}

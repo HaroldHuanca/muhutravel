@@ -1,0 +1,152 @@
+{
+  "id": "paquetes-tests",
+  "version": "2.0",
+  "name": "Paquetes Tests",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "paquetes-list-load",
+      "name": "Paquetes List Loads",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/paquetes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.list-container",
+          "value": "5000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=.table-container",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "paquetes-search",
+      "name": "Paquetes Search Functionality",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/paquetes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=input[placeholder*='Buscar']",
+          "value": "5000"
+        },
+        {
+          "command": "type",
+          "target": "css=input[placeholder*='Buscar']",
+          "value": "Machu"
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.table-container tbody tr",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "paquetes-add-button",
+      "name": "Paquetes Add Button",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/paquetes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=button:has-text('Agregar')",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=button:has-text('Agregar')",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.edit-container",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "paquetes-edit",
+      "name": "Paquetes Edit Package",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/paquetes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.table-container tbody tr:first-child",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=.table-container tbody tr:first-child td:last-child button",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.edit-container",
+          "value": "3000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=input[name='nombre']",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "paquetes-inactivos",
+      "name": "Paquetes View Inactive",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/paquetes/inactivos",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.list-container",
+          "value": "5000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "xpath=//h2[contains(text(), 'Paquetes Inactivos')]",
+          "value": ""
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "paquetes-suite",
+      "name": "Paquetes Test Suite",
+      "parallel": false,
+      "persistSession": false,
+      "tests": [
+        "paquetes-list-load",
+        "paquetes-search",
+        "paquetes-add-button",
+        "paquetes-edit",
+        "paquetes-inactivos"
+      ]
+    }
+  ],
+  "urls": [
+    "http://localhost:3000/"
+  ],
+  "plugins": []
+}

@@ -1,0 +1,162 @@
+{
+  "id": "reportes-tests",
+  "version": "2.0",
+  "name": "Reportes Tests",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "reportes-load",
+      "name": "Reportes Page Loads",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/reportes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.reportes-container",
+          "value": "5000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=.tabs-container",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "reportes-ventas-tab",
+      "name": "Reportes Ventas Tab",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/reportes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=button[data-tab='ventas']",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=button[data-tab='ventas']",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.report-container",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "reportes-pendientes-tab",
+      "name": "Reportes Pendientes Tab",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/reportes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=button[data-tab='pendientes']",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=button[data-tab='pendientes']",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.report-container",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "reportes-clientes-tab",
+      "name": "Reportes Clientes Tab",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/reportes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=button[data-tab='clientes']",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=button[data-tab='clientes']",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.report-container",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "reportes-filter-dates",
+      "name": "Reportes Filter by Dates",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/reportes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=input[type='date']",
+          "value": "5000"
+        },
+        {
+          "command": "type",
+          "target": "css=input[type='date']:first-of-type",
+          "value": "2024-01-01"
+        },
+        {
+          "command": "type",
+          "target": "css=input[type='date']:last-of-type",
+          "value": "2024-12-31"
+        },
+        {
+          "command": "click",
+          "target": "css=button:has-text('Filtrar')",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.report-table",
+          "value": "3000"
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "reportes-suite",
+      "name": "Reportes Test Suite",
+      "parallel": false,
+      "persistSession": false,
+      "tests": [
+        "reportes-load",
+        "reportes-ventas-tab",
+        "reportes-pendientes-tab",
+        "reportes-clientes-tab",
+        "reportes-filter-dates"
+      ]
+    }
+  ],
+  "urls": [
+    "http://localhost:3000/"
+  ],
+  "plugins": []
+}

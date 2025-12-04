@@ -1,0 +1,152 @@
+{
+  "id": "reservas-tests",
+  "version": "2.0",
+  "name": "Reservas Tests",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "reservas-list-load",
+      "name": "Reservas List Loads",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/reservas",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.list-container",
+          "value": "5000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=.table-container",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "reservas-search",
+      "name": "Reservas Search Functionality",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/reservas",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=input[placeholder*='Buscar']",
+          "value": "5000"
+        },
+        {
+          "command": "type",
+          "target": "css=input[placeholder*='Buscar']",
+          "value": "RES"
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.table-container tbody tr",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "reservas-add-button",
+      "name": "Reservas Add Button",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/reservas",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=button:has-text('Agregar')",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=button:has-text('Agregar')",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.edit-container",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "reservas-view-details",
+      "name": "Reservas View Details",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/reservas",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.table-container tbody tr:first-child",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=.table-container tbody tr:first-child td:last-child button",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.edit-container",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "reservas-filter-status",
+      "name": "Reservas Filter by Status",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/reservas",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=select[name='estado']",
+          "value": "5000"
+        },
+        {
+          "command": "selectByValue",
+          "target": "css=select[name='estado']",
+          "value": "confirmada"
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.table-container tbody tr",
+          "value": "3000"
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "reservas-suite",
+      "name": "Reservas Test Suite",
+      "parallel": false,
+      "persistSession": false,
+      "tests": [
+        "reservas-list-load",
+        "reservas-search",
+        "reservas-add-button",
+        "reservas-view-details",
+        "reservas-filter-status"
+      ]
+    }
+  ],
+  "urls": [
+    "http://localhost:3000/"
+  ],
+  "plugins": []
+}

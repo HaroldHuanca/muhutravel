@@ -1,0 +1,152 @@
+{
+  "id": "clientes-tests",
+  "version": "2.0",
+  "name": "Clientes Tests",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "clientes-list-load",
+      "name": "Clientes List Loads",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/clientes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.list-container",
+          "value": "5000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=.search-bar",
+          "value": ""
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=.table-container",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "clientes-search",
+      "name": "Clientes Search Functionality",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/clientes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=input[placeholder*='Buscar']",
+          "value": "5000"
+        },
+        {
+          "command": "type",
+          "target": "css=input[placeholder*='Buscar']",
+          "value": "Juan"
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.table-container tbody tr",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "clientes-add-button",
+      "name": "Clientes Add Button Visible",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/clientes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=button:has-text('Agregar')",
+          "value": "5000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=button:has-text('Agregar')",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "clientes-view-details",
+      "name": "Clientes View Details",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/clientes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.table-container tbody tr:first-child",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=.table-container tbody tr:first-child td:last-child button",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.edit-container",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "clientes-print-report",
+      "name": "Clientes Print Report",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/clientes",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=button:has-text('Imprimir')",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=button:has-text('Imprimir')",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.pdf-viewer",
+          "value": "3000"
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "clientes-suite",
+      "name": "Clientes Test Suite",
+      "parallel": false,
+      "persistSession": false,
+      "tests": [
+        "clientes-list-load",
+        "clientes-search",
+        "clientes-add-button",
+        "clientes-view-details",
+        "clientes-print-report"
+      ]
+    }
+  ],
+  "urls": [
+    "http://localhost:3000/"
+  ],
+  "plugins": []
+}
