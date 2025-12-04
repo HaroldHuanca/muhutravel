@@ -54,7 +54,7 @@ useEffect(() => {
     try {
       setLoading(true);
       const token = sessionStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/clientes', {
+      const response = await api.get('http://localhost:5000/api/clientes', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setClientes(response.data);
@@ -126,7 +126,7 @@ useEffect(() => {
 
     try {
       const token = sessionStorage.getItem('token');
-      const response = await axios.get(
+      const response = await api.get(
         `http://localhost:5000/api/comunicacion/mensajes/${selectedCliente.id}`,
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -144,7 +144,7 @@ useEffect(() => {
 
     try {
       const token = sessionStorage.getItem('token');
-      const response = await axios.get(
+      const response = await api.get(
         `http://localhost:5000/api/comunicacion/mensajes/${selectedCliente.id}`,
         {
           headers: { Authorization: `Bearer ${token}` }
