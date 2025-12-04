@@ -1,0 +1,140 @@
+{
+  "id": "dashboard-tests",
+  "version": "2.0",
+  "name": "Dashboard Tests",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "dashboard-load",
+      "name": "Dashboard Loads Successfully",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.dashboard-container",
+          "value": "5000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=.kpi-grid",
+          "value": ""
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=.charts-grid",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "dashboard-kpi-cards",
+      "name": "Dashboard KPI Cards Display",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.kpi-card.revenue",
+          "value": "5000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=.kpi-card.clients",
+          "value": ""
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=.kpi-card.bookings",
+          "value": ""
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=.kpi-card.packages",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "dashboard-refresh-button",
+      "name": "Dashboard Refresh Button Works",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.refresh-btn",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=.refresh-btn",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.dashboard-loading",
+          "value": "2000"
+        },
+        {
+          "command": "waitForElementNotPresent",
+          "target": "css=.dashboard-loading",
+          "value": "5000"
+        }
+      ]
+    },
+    {
+      "id": "dashboard-charts-render",
+      "name": "Dashboard Charts Render",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.chart-card.main-chart",
+          "value": "5000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "xpath=//h3[contains(text(), 'Tendencia de Ingresos')]",
+          "value": ""
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "xpath=//h3[contains(text(), 'Estado de Reservas')]",
+          "value": ""
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "dashboard-suite",
+      "name": "Dashboard Test Suite",
+      "parallel": false,
+      "persistSession": false,
+      "tests": [
+        "dashboard-load",
+        "dashboard-kpi-cards",
+        "dashboard-refresh-button",
+        "dashboard-charts-render"
+      ]
+    }
+  ],
+  "urls": [
+    "http://localhost:3000/"
+  ],
+  "plugins": []
+}

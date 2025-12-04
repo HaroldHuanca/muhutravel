@@ -1,0 +1,130 @@
+{
+  "id": "empleados-tests",
+  "version": "2.0",
+  "name": "Empleados Tests",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "empleados-list-load",
+      "name": "Empleados List Loads",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/empleados",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.list-container",
+          "value": "5000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=.table-container",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "empleados-search",
+      "name": "Empleados Search Functionality",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/empleados",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=input[placeholder*='Buscar']",
+          "value": "5000"
+        },
+        {
+          "command": "type",
+          "target": "css=input[placeholder*='Buscar']",
+          "value": "Carlos"
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.table-container tbody tr",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "empleados-add-button",
+      "name": "Empleados Add Button",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/empleados",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=button:has-text('Agregar')",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=button:has-text('Agregar')",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.edit-container",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "id": "empleados-edit",
+      "name": "Empleados Edit Employee",
+      "commands": [
+        {
+          "command": "open",
+          "target": "/empleados",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.table-container tbody tr:first-child",
+          "value": "5000"
+        },
+        {
+          "command": "click",
+          "target": "css=.table-container tbody tr:first-child td:last-child button",
+          "value": ""
+        },
+        {
+          "command": "waitForElementPresent",
+          "target": "css=.edit-container",
+          "value": "3000"
+        },
+        {
+          "command": "assertElementPresent",
+          "target": "css=input[name='nombres']",
+          "value": ""
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "empleados-suite",
+      "name": "Empleados Test Suite",
+      "parallel": false,
+      "persistSession": false,
+      "tests": [
+        "empleados-list-load",
+        "empleados-search",
+        "empleados-add-button",
+        "empleados-edit"
+      ]
+    }
+  ],
+  "urls": [
+    "http://localhost:3000/"
+  ],
+  "plugins": []
+}
