@@ -23,8 +23,6 @@ app.use(express.static('public'));
 // Registrar rutas de comunicación
 app.use('/api/comunicacion', comunicacionRouter);
 
-app.use(express.static('public'));
-
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
