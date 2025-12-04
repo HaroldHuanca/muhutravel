@@ -248,12 +248,13 @@ router.post('/', verifyToken, async (req, res) => {
       return res.status(400).json({ error: 'El proveedor asignado al paquete no está activo' });
     }
 
-    const fechaInicio = new Date(paquete.fecha_inicio);
-    const hoy = new Date();
-    if (fechaInicio < hoy) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'No se pueden crear reservas para fechas pasadas' });
-    }
+    // Se permite crear reservas para fechas pasadas (backfilling)
+    // const fechaInicio = new Date(paquete.fecha_inicio);
+    // const hoy = new Date();
+    // if (fechaInicio < hoy) {
+    //   await client.query('ROLLBACK');
+    //   return res.status(400).json({ error: 'No se pueden crear reservas para fechas pasadas' });
+    // }
 
     // 3. Validar Disponibilidad y Tipo de Tour
     if (paquete.tipo === 'REGULAR') {
